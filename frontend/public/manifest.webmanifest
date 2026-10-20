@@ -4,7 +4,7 @@
   "description": "Permainan aksi 3D gaya Disney Pixar untuk latihan sifir matematik 2 hingga 12 secara luar talian (Offline PWA).",
   "start_url": "./",
   "display": "standalone",
-  "orientation": "landscape",
+  "orientation": "any",
   "background_color": "#090d16",
   "theme_color": "#1e1b4b",
   "icons": [
