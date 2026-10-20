@@ -23,22 +23,42 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
-      - name: Install and Build Frontend
-        working-directory: ./frontend
+      - name: Install and Build
         run: |
-          npm install
-          npm run build -- --base=./ || npm run build
-          if [ -d "build" ] && [ ! -d "dist" ]; then mv build dist; fi
+          if [ -f "package.json" ]; then
+            npm install
+            npm run build --if-present
+          fi
+          if [ -f "frontend/package.json" ]; then
+            cd frontend
+            npm install
+            npx vite build --base=./ || npm run build
+            cd ..
+          fi
+          mkdir -p deploy_dist
+          if [ -d "frontend/dist" ]; then
+            cp -r frontend/dist/* deploy_dist/
+          elif [ -d "frontend/build" ]; then
+            cp -r frontend/build/* deploy_dist/
+          elif [ -d "dist" ]; then
+            cp -r dist/* deploy_dist/
+          elif [ -d "build" ]; then
+            cp -r build/* deploy_dist/
+          else
+            cp -r frontend/* deploy_dist/
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './frontend/dist'
+          path: './deploy_dist'
 
       - name: Deploy to GitHub Pages
         id: deployment
