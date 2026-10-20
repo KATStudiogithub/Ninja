@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GameMode, Difficulty, GameState, QuestionData, HeroEntity, EnemyEntity, FloatingText, UserStats } from './types';
-import { CANVAS_WIDTH, CANVAS_HEIGHT, GROUND_Y, GRAVITY, JUMP_FORCE, HERO_SPEED, DASH_SPEED, LEVEL_CONFIGS } from './constants';
+import { CANVAS_WIDTH, GROUND_Y, GRAVITY, JUMP_FORCE, HERO_SPEED, DASH_SPEED, LEVEL_CONFIGS } from './constants';
 import { MathService } from './services/mathService';
 import { StorageService } from './services/storageService';
 import { audioService } from './services/audioService';
@@ -34,13 +34,13 @@ export default function App() {
 
   // Active Round State
   const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null);
-  const [questionsCompletedInLevel, setQuestionsCompletedInLevel] = useState<number>(0);
+  const [, setQuestionsCompletedInLevel] = useState<number>(0);
 
   // Modals
   const [showStatsModal, setShowStatsModal] = useState<boolean>(false);
   const [showGuideModal, setShowGuideModal] = useState<boolean>(false);
 
-  // React State for Frame-by-Frame Rendering (Fixes Frozen character issue!)
+  // React State for Frame-by-Frame Rendering
   const [heroState, setHeroState] = useState<HeroEntity>({
     x: 120,
     y: GROUND_Y - 50,
@@ -109,7 +109,7 @@ export default function App() {
 
     shuffledChoices.forEach((num, index) => {
       const isCorrect = num === question.correctAnswer;
-      const spawnX = CANVAS_WIDTH + 80 + index * 140;
+      const spawnX = CANVAS_WIDTH + 60 + index * 145;
       const speed = baseSpeed + (Math.random() * 0.3 - 0.15);
 
       newEnemies.push({
@@ -147,7 +147,7 @@ export default function App() {
     setScreenShake(0);
 
     const initHero: HeroEntity = {
-      x: 120,
+      x: 130,
       y: GROUND_Y - 50,
       vx: 0,
       vy: 0,
@@ -201,26 +201,25 @@ export default function App() {
     hero.state = 'SLASH';
     audioService.playSlash();
 
-    const reach = 85;
+    const reach = 95;
     const slashBox = {
-      x: hero.facing === 1 ? hero.x + 20 : hero.x - reach,
-      y: hero.y - 20,
+      x: hero.facing === 1 ? hero.x + 15 : hero.x - reach,
+      y: hero.y - 25,
       width: reach,
-      height: 90
+      height: 95
     };
 
     enemiesRef.current.forEach((enemy) => {
       if (enemy.isDead) return;
 
       const hit =
-        slashBox.x < enemy.x + 40 &&
+        slashBox.x < enemy.x + 45 &&
         slashBox.x + slashBox.width > enemy.x &&
-        slashBox.y < enemy.y + 60 &&
+        slashBox.y < enemy.y + 65 &&
         slashBox.y + slashBox.height > enemy.y;
 
       if (hit) {
         if (enemy.isCorrect) {
-          // Correct Answer Target Defeated!
           enemy.isDead = true;
           enemy.deathAnimTimer = 20;
           enemy.hitFlash = 12;
@@ -264,7 +263,6 @@ export default function App() {
           }, 350);
 
         } else {
-          // Wrong Answer Target Attacked! (Penalty)
           enemy.isDead = true;
           enemy.deathAnimTimer = 20;
           enemy.hitFlash = 12;
@@ -276,7 +274,7 @@ export default function App() {
           addFloatingText('SALAH SASARAN! -50', enemy.x, enemy.y - 15, '#f87171');
 
           if (currentQuestion) {
-            setFeedbackMessage(`Salah! Nombor itu bukan jawapan bagi ${currentQuestion.factor1} × ${currentQuestion.factor2}.`);
+            setFeedbackMessage(`Salah! Itu bukan jawapan ${currentQuestion.factor1} × ${currentQuestion.factor2}.`);
             StorageService.recordAnswer(currentQuestion.factor1, false, score);
           }
         }
@@ -315,7 +313,7 @@ export default function App() {
       if (enemy.isCorrect && !enemy.isDead) {
         enemy.isDead = true;
         enemy.deathAnimTimer = 25;
-        addFloatingText('RAGE JUTSU CLEAVE! +150', enemy.x, enemy.y - 25, '#fbbf24');
+        addFloatingText('RAGE JUTSU! +150', enemy.x, enemy.y - 25, '#fbbf24');
         setScore((s) => s + 150);
 
         setTimeout(() => {
@@ -368,7 +366,7 @@ export default function App() {
     };
   }, [handleHeroJump, handleHeroSlash, handleHeroDash, handleActivateSpecialJutsu]);
 
-  // ----------------- 60FPS GAME LOOP (PHYSICS & REACT SYNC) ----------------- //
+  // ----------------- 60FPS GAME LOOP ----------------- //
 
   useEffect(() => {
     const loop = () => {
@@ -395,7 +393,7 @@ export default function App() {
       }
 
       hero.x += hero.vx;
-      if (hero.x < 30) hero.x = 30;
+      if (hero.x < 40) hero.x = 40;
       if (hero.x > CANVAS_WIDTH - 60) hero.x = CANVAS_WIDTH - 60;
 
       // Gravity & Ground
@@ -433,14 +431,13 @@ export default function App() {
 
         enemy.x += enemy.vx;
 
-        // Collision with Hero
         const isColliding =
           hero.x < enemy.x + 36 &&
           hero.x + 36 > enemy.x &&
           hero.y < enemy.y + 50 &&
           hero.y + 50 > enemy.y;
 
-        // CRITICAL RULE: ONLY correct answer enemy damages hero!
+        // ONLY correct answer enemy damages hero!
         if (isColliding && enemy.isCorrect && hero.invulnerableTimer <= 0) {
           hero.invulnerableTimer = 60;
           audioService.playHeroHurt();
@@ -459,7 +456,6 @@ export default function App() {
           });
         }
 
-        // Correct enemy left screen
         if (enemy.x < -60) {
           if (enemy.isCorrect && hero.invulnerableTimer <= 0) {
             setHp((h) => Math.max(0, h - 10));
@@ -478,7 +474,6 @@ export default function App() {
 
       setScreenShake((s) => (s > 0.2 ? s * 0.88 : 0));
 
-      // 4. Push updated state to trigger Three.js re-render smoothly
       setHeroState({ ...hero });
       setEnemiesState([...enemiesRef.current]);
       setFloatingTextsState([...floatingTextsRef.current]);
@@ -499,10 +494,10 @@ export default function App() {
   const currentLevelConfig = LEVEL_CONFIGS[currentLevelIndex];
 
   return (
-    <div className="relative w-screen h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center overflow-hidden font-sans">
-      {/* 3D PLAYING SCREEN */}
+    <div className="relative w-screen h-[100dvh] bg-slate-950 text-slate-100 flex flex-col items-center justify-center overflow-hidden font-sans">
+      {/* FULLSCREEN MOBILE-OPTIMIZED 3D PLAYING SCREEN */}
       {gameState === GameState.PLAYING && (
-        <div className="relative w-full h-full flex flex-col items-center justify-center p-2 sm:p-4">
+        <div className="relative w-full h-full overflow-hidden flex flex-col items-center justify-center">
           <HUD
             hp={hp}
             maxHp={100}
@@ -519,7 +514,7 @@ export default function App() {
             feedbackMessage={feedbackMessage}
           />
 
-          {/* Three.js 3D WebGL Arena */}
+          {/* Edge-to-Edge Three.js 3D Pixar Arena */}
           <ThreeArena
             hero={heroState}
             enemies={enemiesState}
@@ -545,38 +540,40 @@ export default function App() {
 
       {/* Main Menu */}
       {gameState === GameState.MENU && (
-        <MainMenu
-          stats={stats}
-          difficulty={difficulty}
-          onSetDifficulty={setDifficulty}
-          onStartAdventure={() => setGameState(GameState.LEVEL_SELECT)}
-          onStartTableSelect={() => setGameState(GameState.TABLE_SELECT)}
-          onStartWeaknessMode={() => startLevel(0, GameMode.WEAKNESS_TRAINING)}
-          onStartEndless={() => startLevel(9, GameMode.ENDLESS)}
-          onOpenStats={() => setShowStatsModal(true)}
-          onOpenGuide={() => setShowGuideModal(true)}
-        />
+        <div className="w-full h-full overflow-y-auto flex items-center justify-center p-3">
+          <MainMenu
+            stats={stats}
+            difficulty={difficulty}
+            onSetDifficulty={setDifficulty}
+            onStartAdventure={() => setGameState(GameState.LEVEL_SELECT)}
+            onStartTableSelect={() => setGameState(GameState.TABLE_SELECT)}
+            onStartWeaknessMode={() => startLevel(0, GameMode.WEAKNESS_TRAINING)}
+            onStartEndless={() => startLevel(9, GameMode.ENDLESS)}
+            onOpenStats={() => setShowStatsModal(true)}
+            onOpenGuide={() => setShowGuideModal(true)}
+          />
+        </div>
       )}
 
       {/* Level Select */}
       {gameState === GameState.LEVEL_SELECT && (
-        <div className="w-full max-w-2xl bg-slate-900/95 border border-slate-700 rounded-2xl p-5 shadow-2xl flex flex-col max-h-[92vh] overflow-y-auto">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+        <div className="w-[94%] max-w-2xl bg-slate-900/95 border border-slate-700 rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col max-h-[90dvh] overflow-y-auto">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
             <button
               onClick={() => setGameState(GameState.MENU)}
-              className="flex items-center gap-1.5 text-slate-400 hover:text-white font-bold text-xs"
+              className="flex items-center gap-1.5 text-slate-300 hover:text-white font-bold text-xs bg-slate-800 px-3 py-1.5 rounded-lg"
             >
-              <ArrowLeft size={16} /> KEMBALI
+              <ArrowLeft size={15} /> KEMBALI
             </button>
-            <h2 className="text-lg font-black text-white uppercase tracking-wider">
-              PILIH LEVEL PENGEMBARAAN (1 - 10)
+            <h2 className="text-sm sm:text-lg font-black text-white uppercase tracking-wider">
+              PILIH LEVEL (1 - 10)
             </h2>
             <div className="text-xs text-amber-400 font-bold">
-              Terbuka: {stats.levelsUnlocked}/10
+              {stats.levelsUnlocked}/10
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
             {LEVEL_CONFIGS.map((lvl, index) => {
               const isLocked = lvl.levelNumber > stats.levelsUnlocked;
               return (
@@ -584,19 +581,19 @@ export default function App() {
                   key={lvl.levelNumber}
                   disabled={isLocked}
                   onClick={() => startLevel(index, GameMode.ADVENTURE)}
-                  className={`p-3.5 rounded-xl border text-left flex items-center justify-between transition ${
+                  className={`p-3 rounded-xl border text-left flex items-center justify-between transition ${
                     isLocked
                       ? 'bg-slate-950/40 border-slate-800 text-slate-600 cursor-not-allowed opacity-60'
-                      : 'bg-slate-800/80 hover:bg-slate-700/80 border-slate-600 text-white shadow-md active:scale-98'
+                      : 'bg-slate-800/80 hover:bg-slate-700/80 border-slate-600 text-white shadow-md active:scale-95'
                   }`}
                 >
                   <div>
-                    <div className="text-xs font-black text-amber-400">LEVEL {lvl.levelNumber}</div>
+                    <div className="text-[11px] font-black text-amber-400">LEVEL {lvl.levelNumber}</div>
                     <div className="text-sm font-bold">{lvl.title}</div>
-                    <div className="text-[11px] text-slate-400">{lvl.subtitle}</div>
+                    <div className="text-[10px] text-slate-400">{lvl.subtitle}</div>
                   </div>
                   {isLocked ? (
-                    <span className="text-xs font-bold text-slate-500 bg-slate-900 px-2 py-1 rounded">TERKUNCI</span>
+                    <span className="text-[10px] font-bold text-slate-500 bg-slate-900 px-2 py-1 rounded">TERKUNCI</span>
                   ) : (
                     <Play size={18} className="text-red-400 shrink-0" />
                   )}
@@ -609,19 +606,19 @@ export default function App() {
 
       {/* Specific Table Select */}
       {gameState === GameState.TABLE_SELECT && (
-        <div className="w-full max-w-lg bg-slate-900 border border-slate-700 rounded-2xl p-5 shadow-2xl flex flex-col text-center">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+        <div className="w-[94%] max-w-lg bg-slate-900 border border-slate-700 rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col text-center max-h-[90dvh] overflow-y-auto">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
             <button
               onClick={() => setGameState(GameState.MENU)}
-              className="flex items-center gap-1.5 text-slate-400 hover:text-white font-bold text-xs"
+              className="flex items-center gap-1.5 text-slate-300 hover:text-white font-bold text-xs bg-slate-800 px-3 py-1.5 rounded-lg"
             >
-              <ArrowLeft size={16} /> KEMBALI
+              <ArrowLeft size={15} /> KEMBALI
             </button>
-            <h2 className="text-base font-black text-white uppercase">PILIH SIFIR KHUSUS</h2>
+            <h2 className="text-sm sm:text-base font-black text-white uppercase">PILIH SIFIR KHUSUS</h2>
             <div className="w-10" />
           </div>
 
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 mb-5">
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-2">
             {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
               <button
                 key={num}
@@ -629,9 +626,9 @@ export default function App() {
                   setSelectedTable(num);
                   startLevel(0, GameMode.SPECIFIC_TABLE);
                 }}
-                className="py-4 rounded-xl bg-slate-800/90 hover:bg-red-600/90 border border-slate-700 hover:border-red-400 text-white font-black text-lg transition shadow-md active:scale-95 flex flex-col items-center justify-center"
+                className="py-3.5 rounded-xl bg-slate-800/90 hover:bg-red-600/90 border border-slate-700 hover:border-red-400 text-white font-black text-base transition shadow-md active:scale-95 flex flex-col items-center justify-center"
               >
-                <span>SIFIR</span>
+                <span className="text-[10px] text-slate-300">SIFIR</span>
                 <span className="text-2xl text-amber-300">{num}</span>
               </button>
             ))}
@@ -642,8 +639,8 @@ export default function App() {
       {/* Pause Screen */}
       {gameState === GameState.PAUSED && (
         <div className="fixed inset-0 z-40 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl flex flex-col items-center text-center gap-3">
-            <h2 className="text-2xl font-black text-amber-400">PERMAINAN DIJEDA</h2>
+          <div className="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-2xl p-5 shadow-2xl flex flex-col items-center text-center gap-3">
+            <h2 className="text-xl font-black text-amber-400">PERMAINAN DIJEDA</h2>
             <p className="text-xs text-slate-400">Latihan sifir sedang dihentikan seketika.</p>
 
             <button
@@ -673,14 +670,14 @@ export default function App() {
       {/* Level Clear Screen */}
       {gameState === GameState.LEVEL_CLEAR && (
         <div className="fixed inset-0 z-40 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-          <div className="w-full max-w-md bg-slate-900 border-2 border-emerald-500 rounded-2xl p-6 shadow-2xl flex flex-col items-center text-center gap-3">
-            <CheckCircle2 size={48} className="text-emerald-400 animate-bounce" />
+          <div className="w-full max-w-md bg-slate-900 border-2 border-emerald-500 rounded-2xl p-5 shadow-2xl flex flex-col items-center text-center gap-3">
+            <CheckCircle2 size={44} className="text-emerald-400 animate-bounce" />
             <h2 className="text-2xl font-black text-white">LEVEL SELESAI!</h2>
             <p className="text-xs text-slate-300">
               Tahniah, anda berjaya menewaskan sasaran sifir dengan tepat!
             </p>
 
-            <div className="w-full bg-slate-950 p-3 rounded-xl border border-slate-800 my-2 flex justify-around">
+            <div className="w-full bg-slate-950 p-3 rounded-xl border border-slate-800 my-1 flex justify-around">
               <div>
                 <div className="text-[10px] text-slate-400 uppercase">Skor</div>
                 <div className="text-xl font-black text-amber-400">{score}</div>
@@ -717,14 +714,14 @@ export default function App() {
       {/* Game Over Screen */}
       {gameState === GameState.GAME_OVER && (
         <div className="fixed inset-0 z-40 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-          <div className="w-full max-w-md bg-slate-900 border-2 border-red-600 rounded-2xl p-6 shadow-2xl flex flex-col items-center text-center gap-3">
-            <Skull size={48} className="text-red-500 animate-pulse" />
-            <h2 className="text-3xl font-black text-red-500">HERO TUMBANG!</h2>
+          <div className="w-full max-w-md bg-slate-900 border-2 border-red-600 rounded-2xl p-5 shadow-2xl flex flex-col items-center text-center gap-3">
+            <Skull size={44} className="text-red-500 animate-pulse" />
+            <h2 className="text-2xl sm:text-3xl font-black text-red-500">HERO TUMBANG!</h2>
             <p className="text-xs text-slate-400">
               HP anda telah habis. Pastikan anda hanya menyerang musuh yang membawa nombor jawapan betul!
             </p>
 
-            <div className="w-full bg-slate-950 p-3 rounded-xl border border-slate-800 my-2">
+            <div className="w-full bg-slate-950 p-3 rounded-xl border border-slate-800 my-1">
               <div className="text-xs text-slate-400 font-bold uppercase">Skor Dicapai:</div>
               <div className="text-2xl font-black text-amber-400">{score}</div>
             </div>
