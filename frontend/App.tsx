@@ -36,29 +36,72 @@ export default function App() {
   const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null);
   const [, setQuestionsCompletedInLevel] = useState<number>(0);
 
-  // Modals & PWA Install Prompt
+  // Modals & Direct 1-Click PWA Install State
   const [showStatsModal, setShowStatsModal] = useState<boolean>(false);
   const [showGuideModal, setShowGuideModal] = useState<boolean>(false);
   const [guidePlatform, setGuidePlatform] = useState<'ANDROID' | 'IOS'>('ANDROID');
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isInstalled, setIsInstalled] = useState<boolean>(false);
 
+  // Detect OS and Capture Browser Install Prompt
   useEffect(() => {
-    const handler = (e: Event) => {
+    // Check if already running as installed standalone PWA
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+    setIsInstalled(isStandalone);
+
+    // Auto-detect iOS vs Android
+    const ua = window.navigator.userAgent.toLowerCase();
+    if (/iphone|ipad|ipod/.test(ua)) {
+      setGuidePlatform('IOS');
+    } else {
+      setGuidePlatform('ANDROID');
+    }
+
+    const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setDeferredPrompt(null);
+      setShowGuideModal(false);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
   }, []);
 
-  const handleOpenDownloadModal = async (platform: 'ANDROID' | 'IOS') => {
-    if (platform === 'ANDROID' && deferredPrompt) {
-      await deferredPrompt.prompt();
-      await deferredPrompt.userChoice;
-      setDeferredPrompt(null);
-      return;
+  // Direct 1-Click Install Trigger
+  const handleDirectInstall = async (preferredPlatform?: 'ANDROID' | 'IOS') => {
+    // 1. If native browser install prompt is available (Android Chrome / Edge / Samsung Internet), trigger immediately!
+    if (deferredPrompt) {
+      try {
+        await deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+        if (choice.outcome === 'accepted') {
+          setIsInstalled(true);
+        }
+        setDeferredPrompt(null);
+        return;
+      } catch {
+        // Fallback to modal if prompt fails
+      }
     }
-    setGuidePlatform(platform);
+
+    // 2. Otherwise detect device platform and show instant visual 1-step sheet
+    if (preferredPlatform) {
+      setGuidePlatform(preferredPlatform);
+    } else {
+      const ua = window.navigator.userAgent.toLowerCase();
+      setGuidePlatform(/iphone|ipad|ipod/.test(ua) ? 'IOS' : 'ANDROID');
+    }
     setShowGuideModal(true);
   };
 
@@ -530,10 +573,11 @@ export default function App() {
             currentQuestion={currentQuestion}
             rageMeter={rageMeter}
             isMuted={isMuted}
+            isInstalled={isInstalled}
             onToggleMute={toggleMute}
             onPause={() => setGameState(GameState.PAUSED)}
             onActivateJutsu={handleActivateSpecialJutsu}
-            onOpenDownload={() => handleOpenDownloadModal('ANDROID')}
+            onDirectInstall={() => handleDirectInstall()}
             feedbackMessage={feedbackMessage}
           />
 
@@ -567,13 +611,15 @@ export default function App() {
           <MainMenu
             stats={stats}
             difficulty={difficulty}
+            isInstalled={isInstalled}
+            hasNativePrompt={!!deferredPrompt}
             onSetDifficulty={setDifficulty}
             onStartAdventure={() => setGameState(GameState.LEVEL_SELECT)}
             onStartTableSelect={() => setGameState(GameState.TABLE_SELECT)}
             onStartWeaknessMode={() => startLevel(0, GameMode.WEAKNESS_TRAINING)}
             onStartEndless={() => startLevel(9, GameMode.ENDLESS)}
             onOpenStats={() => setShowStatsModal(true)}
-            onOpenDownload={handleOpenDownloadModal}
+            onDirectInstall={handleDirectInstall}
           />
         </div>
       )}
