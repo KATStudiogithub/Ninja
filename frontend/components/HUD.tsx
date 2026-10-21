@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Zap, Award, Flame, Volume2, VolumeX, Pause, Sparkles } from 'lucide-react';
+import { Heart, Zap, Award, Flame, Volume2, VolumeX, Pause, Sparkles, Download } from 'lucide-react';
 import { QuestionData } from '../types';
 
 interface HUDProps {
@@ -15,6 +15,7 @@ interface HUDProps {
   onToggleMute: () => void;
   onPause: () => void;
   onActivateJutsu: () => void;
+  onOpenDownload: () => void;
   feedbackMessage: string | null;
 }
 
@@ -30,13 +31,14 @@ export const HUD: React.FC<HUDProps> = ({
   onToggleMute,
   onPause,
   onActivateJutsu,
+  onOpenDownload,
   feedbackMessage
 }) => {
   const hpPercent = Math.max(0, Math.min(100, (hp / maxHp) * 100));
 
   return (
     <div className="absolute top-0 left-0 right-0 z-20 pointer-events-none px-2.5 pt-2 sm:p-4 flex flex-col gap-1.5">
-      {/* Row 1: Compact Status Bar (HP, Score, Audio, Pause) */}
+      {/* Row 1: Compact Status Bar (HP, Score, Download, Audio, Pause) */}
       <div className="flex items-center justify-between pointer-events-auto gap-1.5">
         {/* Left: Level & HP Bar */}
         <div className="flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-700/80 shadow-lg">
@@ -79,7 +81,7 @@ export const HUD: React.FC<HUDProps> = ({
           </div>
         )}
 
-        {/* Right: Rage Jutsu, Score, Mute & Pause */}
+        {/* Right: Rage Jutsu, Score, Download, Mute & Pause */}
         <div className="flex items-center gap-1.5">
           <button
             onClick={onActivateJutsu}
@@ -100,6 +102,15 @@ export const HUD: React.FC<HUDProps> = ({
               {score}
             </span>
           </div>
+
+          <button
+            onClick={onOpenDownload}
+            className="p-2 bg-emerald-600/90 hover:bg-emerald-500 text-white rounded-xl border border-emerald-400 active:scale-90 shadow-md"
+            aria-label="Download ke Fon"
+            title="Download ke Android / iOS"
+          >
+            <Download size={15} />
+          </button>
 
           <button
             onClick={onToggleMute}
