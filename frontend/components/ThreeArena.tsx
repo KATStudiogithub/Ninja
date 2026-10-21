@@ -24,7 +24,7 @@ export const ThreeArena: React.FC<ThreeArenaProps> = ({
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const isPortraitRef = useRef<boolean>(false);
+  const worldScaleXRef = useRef<number>(9.5);
 
   // Pixar Hero Parts
   const heroGroupRef = useRef<THREE.Group | null>(null);
@@ -49,6 +49,30 @@ export const ThreeArena: React.FC<ThreeArenaProps> = ({
   // Floating text canvas overlay
   const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  // Helper to compute exact camera & world bounds so the entire arena fits any phone screen
+  const updateCameraForScreen = (camera: THREE.PerspectiveCamera, width: number, height: number) => {
+    const aspect = Math.max(0.4, width / Math.max(1, height));
+    const isPortrait = aspect < 1.0;
+
+    // Adjust FOV & Z distance so horizontal stage fits phone width
+    const fov = isPortrait ? 58 : 40;
+    const camZ = isPortrait ? Math.min(28, 13.5 / aspect) : 17.5;
+    const camY = isPortrait ? 3.8 : 4.1;
+    const lookY = isPortrait ? 1.5 : 1.85;
+
+    camera.fov = fov;
+    camera.aspect = aspect;
+    camera.position.set(0, camY, camZ);
+    camera.lookAt(0, lookY, 0);
+    camera.updateProjectionMatrix();
+
+    // Calculate visible horizontal half-width at Z=0 so hero & enemies stay 100% on-screen
+    const vFovRad = (fov * Math.PI) / 180;
+    const visibleHeightAtZero = 2 * Math.tan(vFovRad / 2) * camZ;
+    const visibleWidthAtZero = visibleHeightAtZero * aspect;
+    worldScaleXRef.current = Math.max(4.8, Math.min(10.5, visibleWidthAtZero * 0.44));
+  };
+
   // 1. Initialise Pixar-Style Three.js Scene, Cinematic Lights & Lush World
   useEffect(() => {
     const container = mountRef.current;
@@ -56,7 +80,6 @@ export const ThreeArena: React.FC<ThreeArenaProps> = ({
 
     const width = container.clientWidth || window.innerWidth;
     const height = container.clientHeight || window.innerHeight;
-    isPortraitRef.current = height > width;
 
     // Scene with dreamy Pixar twilight/sunset atmosphere
     const scene = new THREE.Scene();
@@ -64,21 +87,20 @@ export const ThreeArena: React.FC<ThreeArenaProps> = ({
     scene.background = new THREE.Color(0x1e1b4b);
     scene.fog = new THREE.FogExp2(0x2e1065, 0.012);
 
-    // Camera with automatic portrait/landscape adaptation for phones
-    const fov = isPortraitRef.current ? 54 : 38;
-    const camera = new THREE.PerspectiveCamera(fov, width / height, 0.1, 1000);
-    camera.position.set(0, isPortraitRef.current ? 4.8 : 4.2, isPortraitRef.current ? 24 : 18);
-    camera.lookAt(0, isPortraitRef.current ? 1.5 : 1.9, 0);
+    // Camera
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+    updateCameraForScreen(camera, width, height);
     cameraRef.current = camera;
 
     // WebGL Renderer with ACES Filmic Tone Mapping for vibrant Pixar colors
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    renderer.setSize(width, height);
+    renderer.setSize(width, height, false);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.25;
+    renderer.domElement.className = 'w-full h-full block';
     container.innerHTML = '';
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
@@ -107,22 +129,22 @@ export const ThreeArena: React.FC<ThreeArenaProps> = ({
     scene.add(rimLight);
 
     const lanternLight1 = new THREE.PointLight(0xfbbf24, 3.5, 16);
-    lanternLight1.position.set(-7, 3.2, 2);
+    lanternLight1.position.set(-5.5, 3.2, 2);
     scene.add(lanternLight1);
 
     const lanternLight2 = new THREE.PointLight(0xf472b6, 3.2, 16);
-    lanternLight2.position.set(7, 3.2, 2);
+    lanternLight2.position.set(5.5, 3.2, 2);
     scene.add(lanternLight2);
 
     // ----------------- PIXAR STYLIZED ENVIRONMENT ----------------- //
-    const grassGeo = new THREE.CylinderGeometry(45, 45, 4, 48);
+    const grassGeo = new THREE.CylinderGeometry(45, 45, 6, 48);
     const grassMat = new THREE.MeshPhysicalMaterial({
       color: 0x10b981,
       roughness: 0.65,
       clearcoat: 0.1,
     });
     const grassBase = new THREE.Mesh(grassGeo, grassMat);
-    grassBase.position.set(0, -2.05, -2);
+    grassBase.position.set(0, -3.05, -2);
     grassBase.receiveShadow = true;
     scene.add(grassBase);
 
@@ -135,7 +157,7 @@ export const ThreeArena: React.FC<ThreeArenaProps> = ({
         clearcoat: 0.2,
       });
       const stone = new THREE.Mesh(stoneGeo, stoneMat);
-      stone.position.set(i * 1.35, -0.02, (i % 2) * 0.35);
+      stone.position.set(i * 1.25, -0.02, (i % 2) * 0.35);
       stone.scale.set(1.2, 1, 0.85);
       stone.receiveShadow = true;
       scene.add(stone);
@@ -155,9 +177,9 @@ export const ThreeArena: React.FC<ThreeArenaProps> = ({
 
     const hillColors = [0x065f46, 0x047857, 0x3730a3];
     const hillPositions = [
-      { x: -16, y: -3, z: -14, r: 9 },
-      { x: 4, y: -4, z: -18, r: 12 },
-      { x: 20, y: -2.5, z: -13, r: 8.5 },
+      { x: -12, y: -3, z: -14, r: 9 },
+      { x: 2, y: -4, z: -18, r: 12 },
+      { x: 14, y: -2.5, z: -13, r: 8.5 },
     ];
     hillPositions.forEach((h, idx) => {
       const hillGeo = new THREE.SphereGeometry(h.r, 32, 24);
@@ -241,9 +263,9 @@ export const ThreeArena: React.FC<ThreeArenaProps> = ({
       scene.add(torii);
     };
 
-    buildPixarTorii(-9.5, -3.5, 1.05);
-    buildPixarTorii(9.5, -3.5, 1.05);
-    buildPixarTorii(0, -8.5, 1.45);
+    buildPixarTorii(-6.5, -3.5, 0.95);
+    buildPixarTorii(6.5, -3.5, 0.95);
+    buildPixarTorii(0, -8.5, 1.35);
 
     const buildFluffySakuraTree = (x: number, z: number, scale = 1) => {
       const tree = new THREE.Group();
@@ -282,15 +304,15 @@ export const ThreeArena: React.FC<ThreeArenaProps> = ({
       scene.add(tree);
     };
 
-    buildFluffySakuraTree(-14.5, -2.8, 1.15);
-    buildFluffySakuraTree(-4.8, -5.2, 0.95);
-    buildFluffySakuraTree(5.2, -5.0, 1.0);
-    buildFluffySakuraTree(14.8, -3.0, 1.2);
+    buildFluffySakuraTree(-10.5, -2.8, 1.05);
+    buildFluffySakuraTree(-3.8, -5.2, 0.9);
+    buildFluffySakuraTree(4.2, -5.0, 0.95);
+    buildFluffySakuraTree(10.8, -3.0, 1.05);
 
-    const moonGeo = new THREE.SphereGeometry(4.8, 32, 32);
+    const moonGeo = new THREE.SphereGeometry(4.2, 32, 32);
     const moonMat = new THREE.MeshBasicMaterial({ color: 0xfef9c3 });
     const moon = new THREE.Mesh(moonGeo, moonMat);
-    moon.position.set(10, 14, -26);
+    moon.position.set(5, 11.5, -24);
     scene.add(moon);
 
     const cloudsGroup = new THREE.Group();
@@ -304,21 +326,21 @@ export const ThreeArena: React.FC<ThreeArenaProps> = ({
     for (let c = 0; c < 5; c++) {
       const singleCloud = new THREE.Group();
       const spheres = [
-        { x: 0, y: 0, r: 1.2 },
-        { x: -1.0, y: -0.2, r: 0.85 },
-        { x: 1.0, y: -0.15, r: 0.9 },
+        { x: 0, y: 0, r: 1.1 },
+        { x: -0.9, y: -0.2, r: 0.8 },
+        { x: 0.9, y: -0.15, r: 0.85 },
       ];
       spheres.forEach((s) => {
         const m = new THREE.Mesh(new THREE.SphereGeometry(s.r, 16, 16), cloudMat);
         m.position.set(s.x, s.y, 0);
         singleCloud.add(m);
       });
-      singleCloud.position.set(-18 + c * 9.5, 9.5 + (c % 2) * 2.2, -16 - (c % 3) * 3);
+      singleCloud.position.set(-14 + c * 7, 8.2 + (c % 2) * 1.8, -15 - (c % 3) * 2);
       cloudsGroup.add(singleCloud);
     }
     scene.add(cloudsGroup);
 
-    const petalCount = 45;
+    const petalCount = 40;
     const petalGeo = new THREE.SphereGeometry(0.09, 8, 8);
     petalGeo.scale(1.6, 0.4, 1.0);
     const petalMat = new THREE.MeshBasicMaterial({ color: 0xfbcfe8 });
@@ -327,7 +349,7 @@ export const ThreeArena: React.FC<ThreeArenaProps> = ({
 
     const dummy = new THREE.Object3D();
     for (let i = 0; i < petalCount; i++) {
-      dummy.position.set((Math.random() - 0.5) * 32, Math.random() * 12, (Math.random() - 0.5) * 10);
+      dummy.position.set((Math.random() - 0.5) * 26, Math.random() * 12, (Math.random() - 0.5) * 10);
       dummy.updateMatrix();
       petalsMesh.setMatrixAt(i, dummy.matrix);
     }
@@ -565,24 +587,22 @@ export const ThreeArena: React.FC<ThreeArenaProps> = ({
 
     scene.add(heroGroup);
 
-    // Responsive Resize & Orientation Change Handler
+    // Responsive ResizeObserver so it fits phone screens on any rotation or address bar change
     const handleResize = () => {
       if (!container || !rendererRef.current || !cameraRef.current) return;
       const w = container.clientWidth || window.innerWidth;
       const h = container.clientHeight || window.innerHeight;
-      const portrait = h > w;
-      isPortraitRef.current = portrait;
-
-      cameraRef.current.fov = portrait ? 54 : 38;
-      cameraRef.current.aspect = w / h;
-      cameraRef.current.updateProjectionMatrix();
-      rendererRef.current.setSize(w, h);
+      updateCameraForScreen(cameraRef.current, w, h);
+      rendererRef.current.setSize(w, h, false);
     };
 
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(container);
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleResize);
 
     return () => {
+      resizeObserver.disconnect();
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleResize);
       renderer.dispose();
@@ -610,7 +630,7 @@ export const ThreeArena: React.FC<ThreeArenaProps> = ({
     }
   }, [bgTheme]);
 
-  // ----------------- 3. RENDER TICK: PIXAR SQUASH & STRETCH + PHONE CAMERA ----------------- //
+  // ----------------- 3. RENDER TICK: PIXAR SQUASH & STRETCH + PHONE FIT ----------------- //
   useEffect(() => {
     const scene = sceneRef.current;
     const camera = cameraRef.current;
@@ -621,10 +641,10 @@ export const ThreeArena: React.FC<ThreeArenaProps> = ({
 
     const time = Date.now() * 0.001;
     const runCycle = Date.now() * 0.016;
-    const isPortrait = isPortraitRef.current;
+    const scaleX = worldScaleXRef.current;
 
-    const heroWorldX = ((hero.x - 480) / 480) * 11;
-    const heroWorldY = Math.max(0, ((440 - (hero.y + 50)) / 440) * 6);
+    const heroWorldX = ((hero.x - 480) / 480) * scaleX;
+    const heroWorldY = Math.max(0, ((440 - (hero.y + 50)) / 440) * 5.5);
 
     heroGroup.position.set(heroWorldX, heroWorldY, 0);
     heroGroup.rotation.y = hero.facing === 1 ? 0.18 : Math.PI - 0.18;
@@ -683,15 +703,15 @@ export const ThreeArena: React.FC<ThreeArenaProps> = ({
     heroGroup.visible = hero.invulnerableTimer > 0 ? Math.floor(Date.now() / 80) % 2 === 0 : true;
 
     if (cloudsGroupRef.current) {
-      cloudsGroupRef.current.position.x = Math.sin(time * 0.25) * 1.8;
+      cloudsGroupRef.current.position.x = Math.sin(time * 0.25) * 1.5;
     }
     lanternsRef.current.forEach((l, idx) => {
       l.rotation.z = Math.sin(time * 2.5 + idx) * 0.12;
     });
     if (petalsMeshRef.current) {
       const dummy = new THREE.Object3D();
-      for (let i = 0; i < 45; i++) {
-        const px = ((i * 3.7 - time * 1.4) % 32) - 16;
+      for (let i = 0; i < 40; i++) {
+        const px = ((i * 3.1 - time * 1.4) % 24) - 12;
         const py = 12 - ((time * 1.2 + i * 0.9) % 12);
         const pz = Math.sin(time + i) * 3.5;
         dummy.position.set(px, py, pz);
@@ -702,19 +722,18 @@ export const ThreeArena: React.FC<ThreeArenaProps> = ({
       petalsMeshRef.current.instanceMatrix.needsUpdate = true;
     }
 
-    // Smart Phone Camera Tracking (Follows Hero more closely in portrait mode)
+    // Smooth Camera Follow with Action Shake
     const shakeX = (Math.random() - 0.5) * shakeIntensity * 0.08;
     const shakeY = (Math.random() - 0.5) * shakeIntensity * 0.08;
-    camera.position.x = heroWorldX * (isPortrait ? 0.52 : 0.28) + shakeX;
-    camera.position.y = (isPortrait ? 4.8 : 4.2) + heroWorldY * 0.14 + shakeY;
-    camera.position.z = isPortrait ? 23.5 : 18.0;
+    camera.position.x = heroWorldX * 0.22 + shakeX;
+    camera.position.y = (camera.aspect < 1 ? 3.8 : 4.1) + heroWorldY * 0.12 + shakeY;
 
     // ----------------- UPDATE / SPAWN PIXAR 3D ENEMIES ----------------- //
     const activeEnemyIds = new Set<number>();
 
     enemies.forEach((enemy, idx) => {
       activeEnemyIds.add(enemy.id);
-      const enemyWorldX = ((enemy.x - 480) / 480) * 11;
+      const enemyWorldX = ((enemy.x - 480) / 480) * scaleX;
       let enemyMeshGroup = enemiesGroupMap.current.get(enemy.id);
 
       if (!enemyMeshGroup) {
@@ -761,7 +780,7 @@ export const ThreeArena: React.FC<ThreeArenaProps> = ({
         ref={overlayCanvasRef}
         width={960}
         height={540}
-        className="absolute inset-0 pointer-events-none w-full h-full object-contain"
+        className="absolute inset-0 pointer-events-none w-full h-full"
       />
     </div>
   );
