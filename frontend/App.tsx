@@ -9,7 +9,7 @@ import { ThreeArena } from './components/ThreeArena';
 import { TouchControls } from './components/TouchControls';
 import { MainMenu } from './components/MainMenu';
 import { StatsModal } from './components/StatsModal';
-import { PwaGuideModal } from './components/PwaGuideModal';
+import { PwaGuideModal, BeforeInstallPromptEvent } from './components/PwaGuideModal';
 import { ArrowLeft, RotateCcw, Play, CheckCircle2, Skull } from 'lucide-react';
 
 export default function App() {
@@ -36,9 +36,31 @@ export default function App() {
   const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null);
   const [, setQuestionsCompletedInLevel] = useState<number>(0);
 
-  // Modals
+  // Modals & PWA Install Prompt
   const [showStatsModal, setShowStatsModal] = useState<boolean>(false);
   const [showGuideModal, setShowGuideModal] = useState<boolean>(false);
+  const [guidePlatform, setGuidePlatform] = useState<'ANDROID' | 'IOS'>('ANDROID');
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleOpenDownloadModal = async (platform: 'ANDROID' | 'IOS') => {
+    if (platform === 'ANDROID' && deferredPrompt) {
+      await deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      setDeferredPrompt(null);
+      return;
+    }
+    setGuidePlatform(platform);
+    setShowGuideModal(true);
+  };
 
   // React State for Frame-by-Frame Rendering
   const [heroState, setHeroState] = useState<HeroEntity>({
@@ -511,6 +533,7 @@ export default function App() {
             onToggleMute={toggleMute}
             onPause={() => setGameState(GameState.PAUSED)}
             onActivateJutsu={handleActivateSpecialJutsu}
+            onOpenDownload={() => handleOpenDownloadModal('ANDROID')}
             feedbackMessage={feedbackMessage}
           />
 
@@ -550,7 +573,7 @@ export default function App() {
             onStartWeaknessMode={() => startLevel(0, GameMode.WEAKNESS_TRAINING)}
             onStartEndless={() => startLevel(9, GameMode.ENDLESS)}
             onOpenStats={() => setShowStatsModal(true)}
-            onOpenGuide={() => setShowGuideModal(true)}
+            onOpenDownload={handleOpenDownloadModal}
           />
         </div>
       )}
@@ -746,7 +769,14 @@ export default function App() {
 
       {/* Modals */}
       {showStatsModal && <StatsModal stats={stats} onClose={() => setShowStatsModal(false)} />}
-      {showGuideModal && <PwaGuideModal onClose={() => setShowGuideModal(false)} />}
+      {showGuideModal && (
+        <PwaGuideModal
+          initialPlatform={guidePlatform}
+          deferredPrompt={deferredPrompt}
+          onClearPrompt={() => setDeferredPrompt(null)}
+          onClose={() => setShowGuideModal(false)}
+        />
+      )}
     </div>
   );
 }
