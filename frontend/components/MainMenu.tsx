@@ -11,8 +11,22 @@ interface MainMenuProps {
   onStartWeaknessMode: () => void;
   onStartEndless: () => void;
   onOpenStats: () => void;
-  onOpenGuide: () => void;
+  onOpenDownload: (platform: 'ANDROID' | 'IOS') => void;
 }
+
+// Custom Official-Style Android Robot SVG Icon
+const AndroidIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M17.523 15.3414C16.9606 15.3414 16.5046 14.8854 16.5046 14.3229C16.5046 13.7605 16.9606 13.3045 17.523 13.3045C18.0855 13.3045 18.5415 13.7605 18.5415 14.3229C18.5415 14.8854 18.0855 15.3414 17.523 15.3414ZM6.47702 15.3414C5.91455 15.3414 5.45855 14.8854 5.45855 14.3229C5.45855 13.7605 5.91455 13.3045 6.47702 13.3045C7.03949 13.3045 7.49549 13.7605 7.49549 14.3229C7.49549 14.8854 7.03949 15.3414 6.47702 15.3414ZM17.8879 9.1525L19.9212 5.63063C20.0642 5.38297 19.9794 5.06631 19.7318 4.92329C19.4841 4.78028 19.1674 4.86511 19.0244 5.11277L16.9656 8.67879C15.4957 8.00918 13.8065 7.63354 12 7.63354C10.1935 7.63354 8.50434 8.00918 7.03443 8.67879L4.9756 5.11277C4.83259 4.86511 4.51593 4.78028 4.26827 4.92329C4.02061 5.06631 3.93578 5.38297 4.0788 5.63063L6.11214 9.1525C2.66248 11.0258 0.34082 14.5691 0 18.7385H24C23.6592 14.5691 21.3375 11.0258 17.8879 9.1525Z" />
+  </svg>
+);
+
+// Custom Official-Style Apple iOS SVG Icon
+const AppleIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 22C7.79 22.05 6.8 20.68 5.96 19.47C4.25 17 2.94 12.45 4.7 9.39C5.57 7.87 7.13 6.91 8.82 6.88C10.1 6.86 11.32 7.75 12.1 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.09 16.67C20.06 16.74 19.67 18.11 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z" />
+  </svg>
+);
 
 export const MainMenu: React.FC<MainMenuProps> = ({
   stats,
@@ -23,115 +37,140 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   onStartWeaknessMode,
   onStartEndless,
   onOpenStats,
-  onOpenGuide
+  onOpenDownload
 }) => {
   return (
-    <div className="relative w-full max-w-xl mx-auto flex flex-col items-center justify-center p-4 sm:p-6 text-center select-none">
-      {/* Ninja Sifir Title Banner */}
-      <div className="mb-3 sm:mb-5 animate-fade-in">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-950/90 border border-indigo-400/50 text-sky-300 text-xs font-bold tracking-widest uppercase mb-2 shadow-lg">
-          <Sparkles size={14} className="text-amber-400" /> EDISI 3D ANIMASI PIXAR • OFFLINE PWA
+    <div className="relative w-full h-full max-w-lg mx-auto flex flex-col items-center justify-between px-3 py-2.5 sm:p-5 text-center select-none overflow-hidden">
+      {/* Top Title Banner */}
+      <div className="w-full pt-0.5">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-950/90 border border-indigo-400/50 text-sky-300 text-[10px] sm:text-xs font-bold tracking-wider uppercase mb-1 shadow-md">
+          <Sparkles size={12} className="text-amber-400" /> 3D PIXAR • OFFLINE PWA
         </div>
-        <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-white drop-shadow-[0_4px_16px_rgba(239,68,68,0.7)] flex flex-col">
+        <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white drop-shadow-[0_4px_16px_rgba(239,68,68,0.7)] flex flex-col leading-none">
           <span>NINJA SIFIR</span>
-          <span className="text-2xl sm:text-3xl text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-rose-400 to-sky-400">
+          <span className="text-lg sm:text-2xl text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-rose-400 to-sky-400 mt-0.5">
             RAGEBOUND 3D
           </span>
         </h1>
-        <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-md mx-auto">
-          Tewaskan musuh dengan jawapan matematik yang betul! Latihan Sifir 2 hingga 12.
+        <p className="text-[10px] sm:text-xs text-slate-300 mt-0.5 max-w-xs mx-auto leading-snug">
+          Tewaskan musuh jawapan betul! Latihan Sifir 2 hingga 12.
         </p>
       </div>
 
-      {/* Main Mode Buttons */}
-      <div className="w-full flex flex-col gap-2.5 sm:gap-3 mb-4">
-        {/* Mod Pengembaraan (Primary) */}
+      {/* Center Action Buttons */}
+      <div className="w-full flex flex-col gap-1.5 sm:gap-2 my-auto py-1">
         <button
           onClick={onStartAdventure}
-          className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-red-600 via-rose-500 to-amber-500 hover:from-red-500 hover:to-amber-400 text-white font-black text-base sm:text-lg tracking-wide shadow-xl shadow-red-600/40 border border-red-300/40 flex items-center justify-center gap-3 transition-transform active:scale-98"
+          className="w-full py-2.5 sm:py-3 px-4 rounded-2xl bg-gradient-to-r from-red-600 via-rose-500 to-amber-500 active:scale-95 text-white font-black text-sm sm:text-base tracking-wide shadow-xl shadow-red-600/30 border border-red-300/40 flex items-center justify-center gap-2 transition-transform"
         >
-          <Play size={22} className="fill-white" />
+          <Play size={18} className="fill-white shrink-0" />
           <span>MULA PENGEMBARAAN (10 LEVEL)</span>
         </button>
 
-        {/* Grid for other training modes */}
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
           <button
             onClick={onStartTableSelect}
-            className="p-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-200 flex flex-col items-center justify-center gap-1 transition shadow-md active:scale-95"
+            className="p-2 sm:p-2.5 rounded-xl bg-slate-900/90 active:bg-slate-800 border border-slate-700 text-slate-200 flex flex-col items-center justify-center gap-0.5 transition shadow-md active:scale-95"
           >
-            <BookOpen size={20} className="text-amber-400" />
-            <span className="font-bold text-xs sm:text-sm">Latihan Sifir Khusus</span>
-            <span className="text-[10px] text-slate-400">Pilih Sifir 2 - 12</span>
+            <BookOpen size={17} className="text-amber-400" />
+            <span className="font-bold text-xs">Sifir Khusus</span>
+            <span className="text-[9px] text-slate-400">Pilih Sifir 2 - 12</span>
           </button>
 
           <button
             onClick={onStartWeaknessMode}
-            className="p-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-200 flex flex-col items-center justify-center gap-1 transition shadow-md active:scale-95"
+            className="p-2 sm:p-2.5 rounded-xl bg-slate-900/90 active:bg-slate-800 border border-slate-700 text-slate-200 flex flex-col items-center justify-center gap-0.5 transition shadow-md active:scale-95"
           >
-            <Target size={20} className="text-rose-400" />
-            <span className="font-bold text-xs sm:text-sm">Latihan Kelemahan</span>
-            <span className="text-[10px] text-slate-400">Fokus Soalan Tersalah</span>
+            <Target size={17} className="text-rose-400" />
+            <span className="font-bold text-xs">Latih Kelemahan</span>
+            <span className="text-[9px] text-slate-400">Ulang Soalan Salah</span>
           </button>
 
           <button
             onClick={onStartEndless}
-            className="p-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-200 flex flex-col items-center justify-center gap-1 transition shadow-md active:scale-95"
+            className="p-2 sm:p-2.5 rounded-xl bg-slate-900/90 active:bg-slate-800 border border-slate-700 text-slate-200 flex flex-col items-center justify-center gap-0.5 transition shadow-md active:scale-95"
           >
-            <InfinityIcon size={20} className="text-cyan-400" />
-            <span className="font-bold text-xs sm:text-sm">Mod Infiniti</span>
-            <span className="text-[10px] text-slate-400">Skor Tanpa Had</span>
+            <InfinityIcon size={17} className="text-cyan-400" />
+            <span className="font-bold text-xs">Mod Infiniti</span>
+            <span className="text-[9px] text-slate-400">Skor Tanpa Had</span>
           </button>
 
           <button
             onClick={onOpenStats}
-            className="p-3 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-200 flex flex-col items-center justify-center gap-1 transition shadow-md active:scale-95"
+            className="p-2 sm:p-2.5 rounded-xl bg-slate-900/90 active:bg-slate-800 border border-slate-700 text-slate-200 flex flex-col items-center justify-center gap-0.5 transition shadow-md active:scale-95"
           >
-            <BarChart3 size={20} className="text-emerald-400" />
-            <span className="font-bold text-xs sm:text-sm">Prestasi Sifir</span>
-            <span className="text-[10px] text-slate-400">Analisis Ketepatan</span>
+            <BarChart3 size={17} className="text-emerald-400" />
+            <span className="font-bold text-xs">Prestasi Sifir</span>
+            <span className="text-[9px] text-slate-400">Rekod Ketepatan</span>
           </button>
         </div>
-      </div>
 
-      {/* Difficulty Setting Switch */}
-      <div className="w-full bg-slate-900/80 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between mb-3">
-        <span className="text-xs text-slate-400 font-bold">Tahap Kesukaran:</span>
-        <div className="flex gap-1">
-          {(['EASY', 'NORMAL', 'HARD'] as Difficulty[]).map((d) => (
+        {/* Difficulty Setting Switch */}
+        <div className="w-full bg-slate-900/80 border border-slate-800 rounded-xl p-1.5 sm:p-2 flex items-center justify-between">
+          <span className="text-[11px] text-slate-400 font-bold pl-1">Kesukaran:</span>
+          <div className="flex gap-1">
+            {(['EASY', 'NORMAL', 'HARD'] as Difficulty[]).map((d) => (
+              <button
+                key={d}
+                onClick={() => onSetDifficulty(d)}
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-black transition ${
+                  difficulty === d
+                    ? 'bg-red-600 text-white shadow'
+                    : 'bg-slate-800 text-slate-400'
+                }`}
+              >
+                {d === 'EASY' ? 'Mudah' : d === 'NORMAL' ? 'Normal' : 'Sukar'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* DEDICATED ANDROID & iOS DOWNLOAD BUTTONS */}
+        <div className="w-full bg-slate-900/95 border border-indigo-500/40 rounded-2xl p-2 flex flex-col gap-1.5 shadow-lg">
+          <div className="flex items-center justify-center gap-1 text-[10px] font-black text-sky-300 uppercase tracking-wider">
+            <Download size={12} className="text-amber-400 animate-bounce" />
+            <span>DOWNLOAD & PASANG KE SKRIN FON (OFFLINE):</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {/* Android Download Button */}
             <button
-              key={d}
-              onClick={() => onSetDifficulty(d)}
-              className={`px-3 py-1 rounded-lg text-xs font-black transition ${
-                difficulty === d
-                  ? 'bg-red-600 text-white shadow-md'
-                  : 'bg-slate-800 text-slate-400 hover:text-slate-200'
-              }`}
+              onClick={() => onOpenDownload('ANDROID')}
+              className="py-2 px-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-500 hover:to-green-400 active:scale-95 text-white border border-emerald-300/60 shadow-md shadow-emerald-900/40 flex items-center justify-center gap-2 transition"
             >
-              {d === 'EASY' ? 'Mudah (-10)' : d === 'NORMAL' ? 'Normal (-20)' : 'Sukar (-30)'}
+              <AndroidIcon className="w-5 h-5 text-white shrink-0" />
+              <div className="text-left leading-tight">
+                <div className="text-[9px] font-bold text-emerald-100 uppercase">Download</div>
+                <div className="text-xs font-black tracking-tight">ANDROID</div>
+              </div>
+              <Download size={13} className="ml-auto opacity-80 shrink-0" />
             </button>
-          ))}
+
+            {/* iOS / iPhone Download Button */}
+            <button
+              onClick={() => onOpenDownload('IOS')}
+              className="py-2 px-2.5 rounded-xl bg-gradient-to-r from-slate-100 to-slate-300 hover:from-white hover:to-slate-200 active:scale-95 text-slate-950 border border-white shadow-md flex items-center justify-center gap-2 transition"
+            >
+              <AppleIcon className="w-5 h-5 text-slate-950 shrink-0" />
+              <div className="text-left leading-tight">
+                <div className="text-[9px] font-bold text-slate-600 uppercase">Download</div>
+                <div className="text-xs font-black tracking-tight">iOS / iPhone</div>
+              </div>
+              <Download size={13} className="ml-auto opacity-80 shrink-0" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Prominent Link & Download Button */}
-      <button
-        onClick={onOpenGuide}
-        className="w-full py-2.5 px-4 mb-3 rounded-xl bg-gradient-to-r from-indigo-900/90 to-slate-900 border border-indigo-500/60 hover:border-indigo-400 text-indigo-200 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition active:scale-98"
-      >
-        <Download size={16} className="text-sky-400 animate-bounce" />
-        <span>PAUTAN MAIN (LINK), DOWNLOAD & PASANG KE TELEFON</span>
-      </button>
-
-      {/* High score footer */}
-      <div className="flex items-center justify-between w-full text-xs text-slate-400 pt-2 border-t border-slate-800/80">
-        <div className="flex items-center gap-1.5 text-amber-300 font-bold">
-          <Award size={15} />
+      {/* Bottom Footer */}
+      <div className="flex items-center justify-between w-full text-[11px] text-slate-400 pt-1 border-t border-slate-800/80">
+        <div className="flex items-center gap-1 text-amber-300 font-bold">
+          <Award size={14} />
           <span>Skor Tertinggi: {stats.highScore}</span>
         </div>
         <div className="flex items-center gap-1 text-emerald-400 font-semibold">
-          <Shield size={14} />
-          <span>Sedia Dimainkan Luar Talian</span>
+          <Shield size={13} />
+          <span>100% Offline</span>
         </div>
       </div>
     </div>
