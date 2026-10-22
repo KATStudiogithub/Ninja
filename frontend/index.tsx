@@ -3,13 +3,12 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-// Register real Service Worker for 1-Click Native PWA Install eligibility
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('public/sw.js')
+      .register('./sw.js', { scope: './' })
       .catch(() => {
-        // Fallback if path differs
+        navigator.serviceWorker.register('public/sw.js').catch(() => {});
       });
   });
 }
