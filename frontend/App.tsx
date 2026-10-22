@@ -10,6 +10,7 @@ import { ThreeArena } from './components/ThreeArena';
 import { TouchControls } from './components/TouchControls';
 import { MainMenu } from './components/MainMenu';
 import { StatsModal } from './components/StatsModal';
+import { PwaGuideModal } from './components/PwaGuideModal';
 import { ArrowLeft, RotateCcw, Play, CheckCircle2, Skull } from 'lucide-react';
 
 export default function App() {
@@ -36,8 +37,10 @@ export default function App() {
   const [currentQuestion, setCurrentQuestion] = useState<QuestionData | null>(null);
   const [, setQuestionsCompletedInLevel] = useState<number>(0);
 
-  // Modals & Direct 1-Click PWA Install State
+  // Modals & Direct Home Screen Icon Install State
   const [showStatsModal, setShowStatsModal] = useState<boolean>(false);
+  const [showInstallModal, setShowInstallModal] = useState<boolean>(false);
+  const [installModalPlatform, setInstallModalPlatform] = useState<'ANDROID' | 'IOS'>('ANDROID');
   const [hasNativePrompt, setHasNativePrompt] = useState<boolean>(installerService.hasNativePrompt());
   const [isInstalled, setIsInstalled] = useState<boolean>(false);
 
@@ -47,12 +50,27 @@ export default function App() {
       (window.navigator as unknown as { standalone?: boolean }).standalone === true;
     setIsInstalled(isStandalone);
 
+    // Check if opened in top-level window with ?autoinstall=android or ?autoinstall=ios
+    const params = new URLSearchParams(window.location.search);
+    const autoInstall = params.get('autoinstall');
+    if (autoInstall === 'ios') {
+      installerService.installToIOSHomeScreen();
+    } else if (autoInstall === 'android') {
+      setInstallModalPlatform('ANDROID');
+      setShowInstallModal(true);
+    }
+
     const unsubscribe = installerService.onPromptChange((available) => {
       setHasNativePrompt(available);
+      // If opened with ?autoinstall=android and prompt just became ready, trigger it
+      if (available && params.get('autoinstall') === 'android') {
+        installerService.installToAndroidHomeScreen();
+      }
     });
 
     const handleAppInstalled = () => {
       setIsInstalled(true);
+      setShowInstallModal(false);
     };
     window.addEventListener('appinstalled', handleAppInstalled);
 
@@ -62,21 +80,23 @@ export default function App() {
     };
   }, []);
 
-  // Direct 1-Click Auto-Install Trigger (detects iOS vs Android automatically when clicked from HUD)
+  // Direct 1-Click Home Screen Icon Install Trigger from HUD
   const handleDirectOneClickInstall = async () => {
     const ua = window.navigator.userAgent.toLowerCase();
     const isIOS = /iphone|ipad|ipod/.test(ua);
 
     if (isIOS) {
-      installerService.installIOSDirect();
-      setFeedbackMessage('Pemasang iOS dimuat turun! Tekan Benarkan (Allow) pada iPhone.');
+      installerService.installToIOSHomeScreen();
+      setInstallModalPlatform('IOS');
+      setShowInstallModal(true);
     } else {
-      const res = await installerService.installAndroidDirect();
+      const res = await installerService.installToAndroidHomeScreen();
       if (res === 'INSTALLED') {
         setIsInstalled(true);
-        setFeedbackMessage('Aplikasi berjaya dipasang ke telefon!');
-      } else if (res === 'PACKAGE_DOWNLOADED') {
-        setFeedbackMessage('Fail App Ninja Sifir 3D telah dimuat turun ke peranti!');
+        setFeedbackMessage('Ikon Ninja Sifir 3D berjaya dipasang ke Skrin Utama!');
+      } else if (res === 'SHOW_INSTANT_MODAL') {
+        setInstallModalPlatform('ANDROID');
+        setShowInstallModal(true);
       }
     }
   };
@@ -596,6 +616,10 @@ export default function App() {
             onStartEndless={() => startLevel(9, GameMode.ENDLESS)}
             onOpenStats={() => setShowStatsModal(true)}
             onInstallSuccess={() => setIsInstalled(true)}
+            onShowInstantInstallDrawer={(platform) => {
+              setInstallModalPlatform(platform);
+              setShowInstallModal(true);
+            }}
           />
         </div>
       )}
@@ -791,6 +815,15 @@ export default function App() {
 
       {/* Stats Modal */}
       {showStatsModal && <StatsModal stats={stats} onClose={() => setShowStatsModal(false)} />}
+
+      {/* Home Screen Icon Installer Modal */}
+      {showInstallModal && (
+        <PwaGuideModal
+          initialPlatform={installModalPlatform}
+          onClose={() => setShowInstallModal(false)}
+          onInstallSuccess={() => setIsInstalled(true)}
+        />
+      )}
     </div>
   );
 }
