@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Download, Share2, Copy, Check, CheckCircle2, Smartphone, ExternalLink } from 'lucide-react';
+import { X, Download, Copy, Check, CheckCircle2, Smartphone, ExternalLink, AlertCircle } from 'lucide-react';
 import { installerService } from '../services/installerService';
 
 interface PwaGuideModalProps {
@@ -29,6 +29,10 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
   const [copied, setCopied] = useState(false);
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
+  const isIframe = installerService.isRunningInIframe();
+  const isInApp = installerService.isInAppBrowser();
+  const hasPrompt = installerService.hasNativePrompt();
+
   const handleCopyLink = () => {
     if (!currentUrl) return;
     navigator.clipboard.writeText(currentUrl).then(() => {
@@ -37,24 +41,21 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
     });
   };
 
-  const handleOpenStandaloneWindow = () => {
-    const targetUrl = new URL(window.location.href);
-    targetUrl.searchParams.set('autoinstall', activeTab.toLowerCase());
-    window.open(targetUrl.toString(), '_blank', 'noopener,noreferrer');
-  };
-
-  const handleTriggerNativeOrProfile = async () => {
-    if (activeTab === 'ANDROID') {
+  const handleAndroidInstallAction = async () => {
+    if (hasPrompt) {
       const res = await installerService.installToAndroidHomeScreen();
       if (res === 'INSTALLED') {
         onInstallSuccess();
         onClose();
-      } else if (res === 'SHOW_INSTANT_MODAL') {
-        handleOpenStandaloneWindow();
       }
-    } else {
-      installerService.installToIOSHomeScreen();
+      return;
     }
+    // Launch directly in Native Android Chrome via Intent URI
+    installerService.openInNativeAndroidChrome();
+  };
+
+  const handleIOSInstallAction = () => {
+    installerService.installToIOSHomeScreen();
   };
 
   return (
@@ -76,7 +77,7 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
           </button>
         </div>
 
-        {/* Visual Phone Home Screen Mockup showing the exact Icon */}
+        {/* Visual Phone Home Screen Mockup */}
         <div className="my-3 p-3 rounded-2xl bg-gradient-to-b from-indigo-950 to-slate-950 border border-indigo-500/40 flex items-center gap-3.5">
           <div className="flex flex-col items-center shrink-0">
             <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-amber-300 shadow-xl bg-indigo-950">
@@ -89,7 +90,7 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
               <CheckCircle2 size={11} /> Ikon Skrin Utama Rasmi
             </div>
             <p className="text-xs text-slate-200 font-bold leading-snug">
-              Ikon ini akan diletakkan terus di skrin telefon anda supaya boleh diklik & terus main bila-bila masa!
+              Meletakkan ikon Ninja Sifir 3D terus di skrin utama telefon anda supaya boleh diklik & terus main!
             </p>
           </div>
         </div>
@@ -123,44 +124,58 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
 
         {activeTab === 'ANDROID' ? (
           <div className="p-3.5 bg-emerald-950/40 border border-emerald-500/40 rounded-2xl space-y-2.5 mb-3">
+            {/* Diagnostic Alert explaining why it didn't install if inside Iframe / WebView */}
+            {(isIframe || isInApp) && !hasPrompt && (
+              <div className="p-2.5 rounded-xl bg-amber-950/80 border border-amber-500/60 flex items-start gap-2 text-[11px] text-amber-200">
+                <AlertCircle size={16} className="text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong>Kenapa belum masuk ke skrin utama?</strong> Anda sedang membuka game ini di dalam tetingkap pratonton (Iframe / WebView). Sistem keselamatan Android hanya membenarkan pemasangan ikon apabila dibuka terus di dalam <strong>Google Chrome</strong>.
+                </div>
+              </div>
+            )}
+
             <button
-              onClick={handleTriggerNativeOrProfile}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl"
+              onClick={handleAndroidInstallAction}
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 active:scale-95 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl transition"
             >
-              <ExternalLink size={17} />
-              <span>BUKA & PASANG IKON ANDROID SEKARANG</span>
+              {hasPrompt ? (
+                <>
+                  <Download size={18} />
+                  <span>PASANG IKON KE SKRIN ANDROID SEKARANG</span>
+                </>
+              ) : (
+                <>
+                  <ExternalLink size={18} />
+                  <span>1-KLIK BUKA TERUS DI CHROME & INSTALL</span>
+                </>
+              )}
             </button>
+
             <p className="text-[11px] text-slate-300 leading-relaxed">
-              💡 <strong>Nota Penting:</strong> Jika anda sedang membuka pratonton ini di dalam ruang terbenam (iframe), menekan butang hijau di atas akan membuka tab penuh Chrome supaya pop-up sistem <strong>"Install App ke Skrin Utama"</strong> dapat muncul secara automatik.
+              Apabila dibuka di dalam <strong>Google Chrome Android</strong>, pop-up rasmi <strong>"Tambahkan Ninja Sifir 3D ke Skrin Utama"</strong> akan muncul untuk meletakkan ikon game di skrin telefon anda.
             </p>
           </div>
         ) : (
           <div className="p-3.5 bg-slate-800/80 border border-slate-600 rounded-2xl space-y-2.5 mb-3">
             <button
-              onClick={handleTriggerNativeOrProfile}
-              className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl"
+              onClick={handleIOSInstallAction}
+              className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-100 active:scale-95 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl transition"
             >
               <Download size={17} />
               <span>PASANG PROFIL IKON iPhone (WEBCLIP)</span>
             </button>
             <div className="text-[11px] text-slate-300 space-y-1 leading-relaxed">
-              <p>
-                Selepas menekan butang putih di atas pada Safari iPhone:
-              </p>
-              <p>
-                1. Tekan <strong>"Allow / Benarkan"</strong> pada pop-up profil ikon.
-              </p>
-              <p>
-                2. Buka <strong>Settings → Profile Downloaded → Install</strong>, dan ikon <strong>Ninja Sifir 3D</strong> akan terus muncul di skrin utama iPhone anda!
-              </p>
+              <p>Selepas menekan butang putih di atas pada Safari iPhone:</p>
+              <p>1. Tekan <strong>"Allow / Benarkan"</strong> pada pop-up profil ikon.</p>
+              <p>2. Buka <strong>Settings → Profile Downloaded → Install</strong>, dan ikon <strong>Ninja Sifir 3D</strong> akan terus muncul di skrin utama iPhone anda!</p>
             </div>
           </div>
         )}
 
-        {/* Copy Link to open directly in phone browser */}
+        {/* Copy Link Box */}
         <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-1.5 mb-3">
           <div className="text-[10px] font-bold text-slate-400 uppercase">
-            Pautan Terus Permainan (Untuk Dibuka di Chrome / Safari Telefon):
+            Salin Link (Untuk Tampal Terus di Google Chrome Android / Safari):
           </div>
           <div className="flex items-center gap-1.5">
             <input
