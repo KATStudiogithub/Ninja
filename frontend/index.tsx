@@ -3,29 +3,14 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-// Offline PWA Service Worker Registration
+// Register real Service Worker for 1-Click Native PWA Install eligibility
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Basic service worker inline registration to cache app shell
-    const swCode = `
-      const CACHE_NAME = 'ninja-sifir-v1';
-      self.addEventListener('install', (e) => {
-        self.skipWaiting();
+    navigator.serviceWorker
+      .register('public/sw.js')
+      .catch(() => {
+        // Fallback if path differs
       });
-      self.addEventListener('activate', (e) => {
-        e.waitUntil(clients.claim());
-      });
-      self.addEventListener('fetch', (e) => {
-        e.respondWith(
-          caches.match(e.request).then((res) => res || fetch(e.request).catch(() => caches.match('/')))
-        );
-      });
-    `;
-    const blob = new Blob([swCode], { type: 'application/javascript' });
-    const swUrl = URL.createObjectURL(blob);
-    navigator.serviceWorker.register(swUrl).catch(() => {
-      // Offline fallback handling
-    });
   });
 }
 
