@@ -4,15 +4,133 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#1e1b4b" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Ninja Sifir 3D" />
-  <link rel="manifest" href="public/manifest.webmanifest" />
+  <link id="pwa-manifest-link" rel="manifest" href="public/manifest.webmanifest" />
   <link rel="icon" type="image/svg+xml" href="public/icon.svg" />
-  <link rel="apple-touch-icon" href="public/icon.svg" />
+  <link id="apple-touch-icon-link" rel="apple-touch-icon" href="public/icon.svg" />
   <meta name="description" content="Permainan aksi 3D ninja pembelajaran sifir matematik 2 hingga 12. Boleh dimainkan secara luar talian!" />
   <title>NINJA SIFIR: RAGEBOUND 3D — Math Ninja</title>
-  
+
+  <!-- CRITICAL FIX FOR ANDROID PWA INSTALL: Capture beforeinstallprompt immediately & inject PNG 192/512 Manifest -->
+  <script>
+    window.__deferredPwaPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      window.__deferredPwaPrompt = e;
+      window.dispatchEvent(new CustomEvent('pwa-prompt-ready'));
+    });
+
+    (function setupAndroidWebApkManifest() {
+      try {
+        function createPngIcon(size) {
+          var c = document.createElement('canvas');
+          c.width = size;
+          c.height = size;
+          var ctx = c.getContext('2d');
+          if (!ctx) return '';
+          var s = size / 512;
+
+          // Background
+          var bg = ctx.createLinearGradient(0, 0, size, size);
+          bg.addColorStop(0, '#1e1b4b');
+          bg.addColorStop(0.5, '#311042');
+          bg.addColorStop(1, '#090d16');
+          ctx.fillStyle = bg;
+          ctx.fillRect(0, 0, size, size);
+
+          // Ninja Hood
+          ctx.fillStyle = '#1d4ed8';
+          ctx.beginPath();
+          ctx.arc(256 * s, 240 * s, 165 * s, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Face Opening
+          ctx.fillStyle = '#ffedd5';
+          ctx.fillRect(136 * s, 185 * s, 240 * s, 90 * s);
+
+          // Red Headband
+          ctx.fillStyle = '#ef4444';
+          ctx.fillRect(95 * s, 168 * s, 322 * s, 38 * s);
+
+          // Eyes
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(195 * s, 232 * s, 24 * s, 0, Math.PI * 2);
+          ctx.arc(317 * s, 232 * s, 24 * s, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#0284c7';
+          ctx.beginPath();
+          ctx.arc(195 * s, 232 * s, 15 * s, 0, Math.PI * 2);
+          ctx.arc(317 * s, 232 * s, 15 * s, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#090d16';
+          ctx.beginPath();
+          ctx.arc(195 * s, 232 * s, 9 * s, 0, Math.PI * 2);
+          ctx.arc(317 * s, 232 * s, 9 * s, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Gold Sifir Banner
+          ctx.fillStyle = '#fbbf24';
+          ctx.fillRect(126 * s, 380 * s, 260 * s, 78 * s);
+          ctx.fillStyle = '#0f172a';
+          ctx.font = '900 ' + Math.round(48 * s) + 'px system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('7 × 8', 256 * s, 420 * s);
+
+          return c.toDataURL('image/png');
+        }
+
+        var icon192 = createPngIcon(192);
+        var icon512 = createPngIcon(512);
+        window.__ninjaIcon512Png = icon512;
+
+        var appleLink = document.getElementById('apple-touch-icon-link');
+        if (appleLink && icon192) appleLink.href = icon192;
+
+        var baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
+        var dynamicManifest = {
+          id: baseUrl,
+          name: 'Ninja Sifir: Ragebound 3D — Math Ninja',
+          short_name: 'Ninja Sifir 3D',
+          description: 'Permainan aksi 3D gaya Disney Pixar untuk latihan sifir matematik 2 hingga 12 secara luar talian (Offline PWA).',
+          start_url: window.location.origin + window.location.pathname,
+          scope: baseUrl,
+          display: 'standalone',
+          orientation: 'any',
+          background_color: '#090d16',
+          theme_color: '#1e1b4b',
+          icons: [
+            {
+              src: icon192,
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
+              src: icon512,
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any maskable'
+            }
+          ]
+        };
+
+        var blob = new Blob([JSON.stringify(dynamicManifest)], { type: 'application/manifest+json' });
+        var manifestUrl = URL.createObjectURL(blob);
+        var manifestLink = document.getElementById('pwa-manifest-link');
+        if (manifestLink) manifestLink.href = manifestUrl;
+      } catch (err) {
+        console.warn('Manifest setup fallback:', err);
+      }
+    })();
+  </script>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
