@@ -4,12 +4,12 @@ import { CANVAS_WIDTH, GROUND_Y, GRAVITY, JUMP_FORCE, HERO_SPEED, DASH_SPEED, LE
 import { MathService } from './services/mathService';
 import { StorageService } from './services/storageService';
 import { audioService } from './services/audioService';
+import { installerService } from './services/installerService';
 import { HUD } from './components/HUD';
 import { ThreeArena } from './components/ThreeArena';
 import { TouchControls } from './components/TouchControls';
 import { MainMenu } from './components/MainMenu';
 import { StatsModal } from './components/StatsModal';
-import { PwaGuideModal, BeforeInstallPromptEvent } from './components/PwaGuideModal';
 import { ArrowLeft, RotateCcw, Play, CheckCircle2, Skull } from 'lucide-react';
 
 export default function App() {
@@ -38,71 +38,47 @@ export default function App() {
 
   // Modals & Direct 1-Click PWA Install State
   const [showStatsModal, setShowStatsModal] = useState<boolean>(false);
-  const [showGuideModal, setShowGuideModal] = useState<boolean>(false);
-  const [guidePlatform, setGuidePlatform] = useState<'ANDROID' | 'IOS'>('ANDROID');
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [hasNativePrompt, setHasNativePrompt] = useState<boolean>(installerService.hasNativePrompt());
   const [isInstalled, setIsInstalled] = useState<boolean>(false);
 
-  // Detect OS and Capture Browser Install Prompt
   useEffect(() => {
-    // Check if already running as installed standalone PWA
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as unknown as { standalone?: boolean }).standalone === true;
     setIsInstalled(isStandalone);
 
-    // Auto-detect iOS vs Android
-    const ua = window.navigator.userAgent.toLowerCase();
-    if (/iphone|ipad|ipod/.test(ua)) {
-      setGuidePlatform('IOS');
-    } else {
-      setGuidePlatform('ANDROID');
-    }
-
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    };
+    const unsubscribe = installerService.onPromptChange((available) => {
+      setHasNativePrompt(available);
+    });
 
     const handleAppInstalled = () => {
       setIsInstalled(true);
-      setDeferredPrompt(null);
-      setShowGuideModal(false);
     };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
+
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      unsubscribe();
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
-  // Direct 1-Click Install Trigger
-  const handleDirectInstall = async (preferredPlatform?: 'ANDROID' | 'IOS') => {
-    // 1. If native browser install prompt is available (Android Chrome / Edge / Samsung Internet), trigger immediately!
-    if (deferredPrompt) {
-      try {
-        await deferredPrompt.prompt();
-        const choice = await deferredPrompt.userChoice;
-        if (choice.outcome === 'accepted') {
-          setIsInstalled(true);
-        }
-        setDeferredPrompt(null);
-        return;
-      } catch {
-        // Fallback to modal if prompt fails
+  // Direct 1-Click Auto-Install Trigger (detects iOS vs Android automatically when clicked from HUD)
+  const handleDirectOneClickInstall = async () => {
+    const ua = window.navigator.userAgent.toLowerCase();
+    const isIOS = /iphone|ipad|ipod/.test(ua);
+
+    if (isIOS) {
+      installerService.installIOSDirect();
+      setFeedbackMessage('Pemasang iOS dimuat turun! Tekan Benarkan (Allow) pada iPhone.');
+    } else {
+      const res = await installerService.installAndroidDirect();
+      if (res === 'INSTALLED') {
+        setIsInstalled(true);
+        setFeedbackMessage('Aplikasi berjaya dipasang ke telefon!');
+      } else if (res === 'PACKAGE_DOWNLOADED') {
+        setFeedbackMessage('Fail App Ninja Sifir 3D telah dimuat turun ke peranti!');
       }
     }
-
-    // 2. Otherwise detect device platform and show instant visual 1-step sheet
-    if (preferredPlatform) {
-      setGuidePlatform(preferredPlatform);
-    } else {
-      const ua = window.navigator.userAgent.toLowerCase();
-      setGuidePlatform(/iphone|ipad|ipod/.test(ua) ? 'IOS' : 'ANDROID');
-    }
-    setShowGuideModal(true);
   };
 
   // React State for Frame-by-Frame Rendering
@@ -577,7 +553,7 @@ export default function App() {
             onToggleMute={toggleMute}
             onPause={() => setGameState(GameState.PAUSED)}
             onActivateJutsu={handleActivateSpecialJutsu}
-            onDirectInstall={() => handleDirectInstall()}
+            onDirectInstall={handleDirectOneClickInstall}
             feedbackMessage={feedbackMessage}
           />
 
@@ -612,14 +588,14 @@ export default function App() {
             stats={stats}
             difficulty={difficulty}
             isInstalled={isInstalled}
-            hasNativePrompt={!!deferredPrompt}
+            hasNativePrompt={hasNativePrompt}
             onSetDifficulty={setDifficulty}
             onStartAdventure={() => setGameState(GameState.LEVEL_SELECT)}
             onStartTableSelect={() => setGameState(GameState.TABLE_SELECT)}
             onStartWeaknessMode={() => startLevel(0, GameMode.WEAKNESS_TRAINING)}
             onStartEndless={() => startLevel(9, GameMode.ENDLESS)}
             onOpenStats={() => setShowStatsModal(true)}
-            onDirectInstall={handleDirectInstall}
+            onInstallSuccess={() => setIsInstalled(true)}
           />
         </div>
       )}
@@ -813,16 +789,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Modals */}
+      {/* Stats Modal */}
       {showStatsModal && <StatsModal stats={stats} onClose={() => setShowStatsModal(false)} />}
-      {showGuideModal && (
-        <PwaGuideModal
-          initialPlatform={guidePlatform}
-          deferredPrompt={deferredPrompt}
-          onClearPrompt={() => setDeferredPrompt(null)}
-          onClose={() => setShowGuideModal(false)}
-        />
-      )}
     </div>
   );
 }
