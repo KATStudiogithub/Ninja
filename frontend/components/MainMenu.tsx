@@ -55,9 +55,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     if (result === 'INSTALLED') {
       setInstallToast('✅ Ikon Ninja Sifir 3D berjaya dipasang ke Skrin Utama telefon anda!');
       onInstallSuccess();
-    } else if (result === 'OPENED_TOP_WINDOW') {
-      setInstallToast('📲 Membuka tetingkap penuh untuk memasang ikon terus ke Skrin Utama...');
-    } else {
+    } else if (result === 'LAUNCHED_CHROME_INTENT') {
+      setInstallToast('📲 Membuka Google Chrome Android untuk memasang ikon ke Skrin Utama...');
+    } else if (result === 'SHOW_INSTANT_MODAL') {
       onShowInstantInstallDrawer('ANDROID');
     }
     setTimeout(() => setInstallToast(null), 5000);
@@ -120,7 +120,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 </div>
                 <p className="text-[10px] text-slate-300 leading-tight mt-0.5">
                   {hasNativePrompt
-                    ? 'Sedia! Klik untuk letak ikon game terus di skrin utama fon & main 1-klik:'
+                    ? '✅ Sedia! Klik butang hijau untuk terus pasang ikon ke skrin fon:'
                     : 'Letak ikon game ini di skrin utama fon supaya boleh klik & terus main:'}
                 </p>
               </div>
@@ -155,7 +155,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-white via-slate-100 to-slate-200 hover:from-white hover:to-white active:scale-95 text-slate-950 border border-white shadow-lg flex items-center justify-center gap-2 transition"
               >
                 {installingPlatform === 'IOS' ? (
-                  <Loader2 size={18} className="animate-spin text-slate-900 shrink-0" />
+                  <Loader2 size={18} className="animate-spin text-slate-950 shrink-0" />
                 ) : (
                   <AppleIcon className="w-5 h-5 text-slate-950 shrink-0" />
                 )}
