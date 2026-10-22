@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, BookOpen, Target, Infinity as InfinityIcon, BarChart3, Download, Shield, Award, Sparkles, CheckCircle2, Loader2 } from 'lucide-react';
+import { Play, BookOpen, Target, Infinity as InfinityIcon, BarChart3, Download, Shield, Award, Sparkles, CheckCircle2, Loader2, Smartphone } from 'lucide-react';
 import { Difficulty, UserStats } from '../types';
 import { installerService } from '../services/installerService';
 
@@ -15,6 +15,7 @@ interface MainMenuProps {
   onStartEndless: () => void;
   onOpenStats: () => void;
   onInstallSuccess: () => void;
+  onShowInstantInstallDrawer: (platform: 'ANDROID' | 'IOS') => void;
 }
 
 const AndroidIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
@@ -33,6 +34,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   stats,
   difficulty,
   isInstalled,
+  hasNativePrompt,
   onSetDifficulty,
   onStartAdventure,
   onStartTableSelect,
@@ -40,36 +42,39 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   onStartEndless,
   onOpenStats,
   onInstallSuccess,
+  onShowInstantInstallDrawer,
 }) => {
   const [installingPlatform, setInstallingPlatform] = useState<'ANDROID' | 'IOS' | null>(null);
   const [installToast, setInstallToast] = useState<string | null>(null);
 
-  const handleOneClickAndroid = async () => {
+  const handleInstallAndroidIcon = async () => {
     setInstallingPlatform('ANDROID');
-    setInstallToast('Memulakan pemasangan terus ke Android...');
-    const result = await installerService.installAndroidDirect();
+    const result = await installerService.installToAndroidHomeScreen();
     setInstallingPlatform(null);
 
     if (result === 'INSTALLED') {
-      setInstallToast('✅ Berjaya dipasang ke Skrin Utama Android!');
+      setInstallToast('✅ Ikon Ninja Sifir 3D berjaya dipasang ke Skrin Utama telefon anda!');
       onInstallSuccess();
-    } else if (result === 'PACKAGE_DOWNLOADED') {
-      setInstallToast('✅ Pakej App Ninja Sifir 3D dimuat turun! Buka fail untuk terus main.');
+    } else if (result === 'OPENED_TOP_WINDOW') {
+      setInstallToast('📲 Membuka tetingkap penuh untuk memasang ikon terus ke Skrin Utama...');
     } else {
-      setInstallToast(null);
+      onShowInstantInstallDrawer('ANDROID');
     }
     setTimeout(() => setInstallToast(null), 5000);
   };
 
-  const handleOneClickIOS = () => {
+  const handleInstallIOSIcon = () => {
     setInstallingPlatform('IOS');
-    setInstallToast('Memuat turun pemasang WebClip iOS...');
-    installerService.installIOSDirect();
+    const res = installerService.installToIOSHomeScreen();
     setTimeout(() => {
       setInstallingPlatform(null);
-      setInstallToast('✅ Pemasang iOS dimuat turun! Tekan "Allow / Benarkan" pada pop-up iPhone.');
-      setTimeout(() => setInstallToast(null), 6000);
-    }, 600);
+      if (res === 'OPENED_TOP_WINDOW') {
+        setInstallToast('📲 Membuka tetingkap penuh Safari untuk memasang ikon ke Home Screen...');
+      } else {
+        onShowInstantInstallDrawer('IOS');
+      }
+      setTimeout(() => setInstallToast(null), 5000);
+    }, 400);
   };
 
   return (
@@ -92,34 +97,41 @@ export const MainMenu: React.FC<MainMenuProps> = ({
 
       {/* Center Action Buttons */}
       <div className="w-full flex flex-col gap-1.5 sm:gap-2 my-auto py-1">
-        {/* DIRECT 1-CLICK AUTO-INSTALL PANEL (NO 3-DOTS / NO SHARE MENU NEEDED) */}
+        {/* HOME SCREEN ICON INSTALLER PANEL */}
         {!isInstalled ? (
           <div className="w-full p-2.5 rounded-2xl bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 border-2 border-emerald-400/80 shadow-xl shadow-emerald-950/40 flex flex-col gap-2">
+            {/* Phone Home Screen Icon Preview */}
             <div className="flex items-center gap-2.5">
-              <div className="relative w-11 h-11 rounded-xl overflow-hidden border-2 border-amber-300 shadow-md shrink-0 bg-indigo-950">
-                <img src="public/icon.svg" alt="Ninja Sifir 3D" className="w-full h-full object-cover" />
+              <div className="relative flex flex-col items-center shrink-0">
+                <div className="w-12 h-12 rounded-2xl overflow-hidden border-2 border-amber-300 shadow-lg bg-indigo-950">
+                  <img src="public/icon.svg" alt="Ninja Sifir 3D" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-[8px] font-bold text-white mt-0.5 bg-slate-950/80 px-1.5 rounded">
+                  Ninja Sifir 3D
+                </span>
               </div>
+
               <div className="text-left flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
+                  <Smartphone size={13} className="text-emerald-400 shrink-0" />
                   <span className="text-xs sm:text-sm font-black text-white truncate">
-                    Pasang Terus ke Telefon (1-Klik)
-                  </span>
-                  <span className="px-1.5 py-0.2 bg-emerald-500/20 border border-emerald-400/50 rounded text-[8px] font-black text-emerald-300">
-                    AUTO-INSTALL
+                    Pasang Ikon ke Skrin Fon
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-300 truncate">
-                  Klik ikon di bawah untuk terus install tanpa tekan 3 titik / Share:
+                <p className="text-[10px] text-slate-300 leading-tight mt-0.5">
+                  {hasNativePrompt
+                    ? 'Sedia! Klik untuk letak ikon game terus di skrin utama fon & main 1-klik:'
+                    : 'Letak ikon game ini di skrin utama fon supaya boleh klik & terus main:'}
                 </p>
               </div>
             </div>
 
-            {/* 2 Direct 1-Click Hardware Install Buttons */}
+            {/* 2 Direct Home Screen Icon Install Buttons */}
             <div className="grid grid-cols-2 gap-2">
-              {/* Direct 1-Click Android Auto-Installer */}
+              {/* Install Icon to Android Home Screen */}
               <button
                 type="button"
-                onClick={handleOneClickAndroid}
+                onClick={handleInstallAndroidIcon}
                 disabled={installingPlatform === 'ANDROID'}
                 className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 active:scale-95 text-white border border-emerald-200 shadow-lg shadow-emerald-900/50 flex items-center justify-center gap-2 transition"
               >
@@ -129,16 +141,16 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   <AndroidIcon className="w-5 h-5 text-white shrink-0" />
                 )}
                 <div className="text-left leading-none">
-                  <div className="text-[8px] font-bold text-emerald-100 uppercase">1-KLIK INSTALL</div>
+                  <div className="text-[8px] font-bold text-emerald-100 uppercase">PASANG IKON</div>
                   <div className="text-xs font-black tracking-tight mt-0.5">ANDROID</div>
                 </div>
                 <Download size={14} className="ml-auto shrink-0 stroke-[2.5]" />
               </button>
 
-              {/* Direct 1-Click iOS WebClip Auto-Installer */}
+              {/* Install Icon to iPhone / iOS Home Screen */}
               <button
                 type="button"
-                onClick={handleOneClickIOS}
+                onClick={handleInstallIOSIcon}
                 disabled={installingPlatform === 'IOS'}
                 className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-white via-slate-100 to-slate-200 hover:from-white hover:to-white active:scale-95 text-slate-950 border border-white shadow-lg flex items-center justify-center gap-2 transition"
               >
@@ -148,7 +160,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   <AppleIcon className="w-5 h-5 text-slate-950 shrink-0" />
                 )}
                 <div className="text-left leading-none">
-                  <div className="text-[8px] font-bold text-slate-600 uppercase">1-KLIK INSTALL</div>
+                  <div className="text-[8px] font-bold text-slate-600 uppercase">PASANG IKON</div>
                   <div className="text-xs font-black tracking-tight mt-0.5">iPhone / iOS</div>
                 </div>
                 <Download size={14} className="ml-auto shrink-0 stroke-[2.5]" />
@@ -164,7 +176,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         ) : (
           <div className="w-full py-1.5 px-3 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-[11px] font-bold flex items-center justify-center gap-1.5">
             <CheckCircle2 size={14} className="text-emerald-400" />
-            <span>Aplikasi Telah Siap Dipasang ke Telefon Anda</span>
+            <span>Ikon Ninja Sifir 3D Telah Ada di Skrin Telefon Anda</span>
           </div>
         )}
 
