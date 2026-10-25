@@ -1,18 +1,47 @@
 {
+  "id": "./",
   "name": "Ninja Sifir: Ragebound 3D — Math Ninja",
   "short_name": "Ninja Sifir 3D",
   "description": "Permainan aksi 3D gaya Disney Pixar untuk latihan sifir matematik 2 hingga 12 secara luar talian (Offline PWA).",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "fullscreen"],
   "orientation": "any",
   "background_color": "#090d16",
   "theme_color": "#1e1b4b",
+  "categories": ["education", "games"],
+  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "public/icon.svg",
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.svg",
       "sizes": "192x192 512x512",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
