@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Play, BookOpen, Target, Infinity as InfinityIcon, BarChart3, Download, Shield, Award, Sparkles, CheckCircle2, Loader2, Smartphone } from 'lucide-react';
 import { Difficulty, UserStats } from '../types';
 import { installerService } from '../services/installerService';
+import { AppIcon } from './AppIcon';
 
 interface MainMenuProps {
   stats: UserStats;
@@ -65,34 +66,28 @@ export const MainMenu: React.FC<MainMenuProps> = ({
 
   const handleInstallIOSIcon = () => {
     setInstallingPlatform('IOS');
-    const res = installerService.installToIOSHomeScreen();
-    setTimeout(() => {
-      setInstallingPlatform(null);
-      if (res === 'OPENED_TOP_WINDOW') {
-        setInstallToast('📲 Membuka tetingkap penuh Safari untuk memasang ikon ke Home Screen...');
-      } else {
-        onShowInstantInstallDrawer('IOS');
-      }
-      setTimeout(() => setInstallToast(null), 5000);
-    }, 400);
+    onShowInstantInstallDrawer('IOS');
+    setTimeout(() => setInstallingPlatform(null), 300);
   };
 
   return (
-    <div className="relative w-full h-full max-w-lg mx-auto flex flex-col items-center justify-between px-3 py-2 sm:p-5 text-center select-none overflow-hidden">
-      {/* Top Title Banner */}
-      <div className="w-full pt-0.5">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-950/90 border border-indigo-400/50 text-sky-300 text-[10px] sm:text-xs font-bold tracking-wider uppercase mb-1 shadow-md">
-          <Sparkles size={12} className="text-amber-400" /> 3D PIXAR • OFFLINE PWA
+    <div className="relative w-full h-full max-w-lg mx-auto flex flex-col items-center justify-between px-3 py-2 sm:p-4 text-center select-none overflow-hidden">
+      {/* Top Hero App Icon & Title Banner */}
+      <div className="w-full flex flex-col items-center pt-0.5">
+        <div className="flex items-center gap-3 mb-1">
+          <AppIcon className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl ring-2 ring-amber-400 shadow-2xl shadow-red-600/30" />
+          <div className="text-left">
+            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-950/90 border border-indigo-400/50 text-sky-300 text-[9px] sm:text-[10px] font-bold tracking-wider uppercase mb-0.5">
+              <Sparkles size={10} className="text-amber-400" /> 3D PIXAR • OFFLINE PWA
+            </div>
+            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white drop-shadow-[0_4px_16px_rgba(239,68,68,0.7)] leading-none">
+              NINJA SIFIR <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-rose-400 to-sky-400">3D</span>
+            </h1>
+            <p className="text-[10px] sm:text-xs text-slate-300 mt-0.5 leading-snug">
+              Tewaskan musuh jawapan betul! Sifir 2 hingga 12.
+            </p>
+          </div>
         </div>
-        <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white drop-shadow-[0_4px_16px_rgba(239,68,68,0.7)] flex flex-col leading-none">
-          <span>NINJA SIFIR</span>
-          <span className="text-lg sm:text-2xl text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-rose-400 to-sky-400 mt-0.5">
-            RAGEBOUND 3D
-          </span>
-        </h1>
-        <p className="text-[10px] sm:text-xs text-slate-300 mt-0.5 max-w-xs mx-auto leading-snug">
-          Tewaskan musuh jawapan betul! Latihan Sifir 2 hingga 12.
-        </p>
       </div>
 
       {/* Center Action Buttons */}
@@ -103,9 +98,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             {/* Phone Home Screen Icon Preview */}
             <div className="flex items-center gap-2.5">
               <div className="relative flex flex-col items-center shrink-0">
-                <div className="w-12 h-12 rounded-2xl overflow-hidden border-2 border-amber-300 shadow-lg bg-indigo-950">
-                  <img src="public/icon.svg" alt="Ninja Sifir 3D" className="w-full h-full object-cover" />
-                </div>
+                <AppIcon className="w-12 h-12 rounded-2xl ring-2 ring-amber-300" />
                 <span className="text-[8px] font-bold text-white mt-0.5 bg-slate-950/80 px-1.5 rounded">
                   Ninja Sifir 3D
                 </span>
@@ -115,13 +108,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 <div className="flex items-center gap-1.5">
                   <Smartphone size={13} className="text-emerald-400 shrink-0" />
                   <span className="text-xs sm:text-sm font-black text-white truncate">
-                    Pasang Ikon ke Skrin Fon
+                    Ikon Skrin Utama (Home Screen)
                   </span>
                 </div>
                 <p className="text-[10px] text-slate-300 leading-tight mt-0.5">
                   {hasNativePrompt
                     ? '✅ Sedia! Klik butang hijau untuk terus pasang ikon ke skrin fon:'
-                    : 'Letak ikon game ini di skrin utama fon supaya boleh klik & terus main:'}
+                    : 'Pasang ikon rasmi ini ke skrin utama fon untuk main 1-klik:'}
                 </p>
               </div>
             </div>
