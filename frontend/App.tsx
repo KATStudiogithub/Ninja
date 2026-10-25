@@ -6,6 +6,7 @@ import { StorageService } from './services/storageService';
 import { audioService } from './services/audioService';
 import { installerService } from './services/installerService';
 import { HUD } from './components/HUD';
+import { PwaHeader } from './components/PwaHeader';
 import { ThreeArena } from './components/ThreeArena';
 import { TouchControls } from './components/TouchControls';
 import { MainMenu } from './components/MainMenu';
@@ -50,11 +51,20 @@ export default function App() {
       (window.navigator as unknown as { standalone?: boolean }).standalone === true;
     setIsInstalled(isStandalone);
 
+    // Auto-detect iOS vs Android for initial guide tab
+    const ua = window.navigator.userAgent.toLowerCase();
+    if (/iphone|ipad|ipod/.test(ua)) {
+      setInstallModalPlatform('IOS');
+    } else {
+      setInstallModalPlatform('ANDROID');
+    }
+
     // Check if opened in top-level window with ?autoinstall=android or ?autoinstall=ios
     const params = new URLSearchParams(window.location.search);
     const autoInstall = params.get('autoinstall');
     if (autoInstall === 'ios') {
-      installerService.installToIOSHomeScreen();
+      setInstallModalPlatform('IOS');
+      setShowInstallModal(true);
     } else if (autoInstall === 'android') {
       setInstallModalPlatform('ANDROID');
       setShowInstallModal(true);
@@ -62,7 +72,6 @@ export default function App() {
 
     const unsubscribe = installerService.onPromptChange((available) => {
       setHasNativePrompt(available);
-      // If opened with ?autoinstall=android and prompt just became ready, trigger it
       if (available && params.get('autoinstall') === 'android') {
         installerService.installToAndroidHomeScreen();
       }
@@ -80,25 +89,31 @@ export default function App() {
     };
   }, []);
 
-  // Direct 1-Click Home Screen Icon Install Trigger from HUD
-  const handleDirectOneClickInstall = async () => {
+  // Handler for 'Pasang App' Button in Header Navigation & HUD
+  const handlePasangAppClick = async () => {
     const ua = window.navigator.userAgent.toLowerCase();
     const isIOS = /iphone|ipad|ipod/.test(ua);
 
+    // 1. Jika pengguna menggunakan iPhone/iPad (iOS Safari), paparkan modal panduan 'Share' -> 'Add to Home Screen'
     if (isIOS) {
-      installerService.installToIOSHomeScreen();
       setInstallModalPlatform('IOS');
       setShowInstallModal(true);
-    } else {
+      return;
+    }
+
+    // 2. Jika acara beforeinstallprompt tersedia (Android/Desktop Chrome), cetuskan prompt pemasangan terus
+    if (installerService.hasNativePrompt()) {
       const res = await installerService.installToAndroidHomeScreen();
       if (res === 'INSTALLED') {
         setIsInstalled(true);
-        setFeedbackMessage('Ikon Ninja Sifir 3D berjaya dipasang ke Skrin Utama!');
-      } else if (res === 'SHOW_INSTANT_MODAL') {
-        setInstallModalPlatform('ANDROID');
-        setShowInstallModal(true);
+        setFeedbackMessage('Aplikasi Ninja Sifir 3D berjaya dipasang!');
       }
+      return;
     }
+
+    // 3. Jika belum tersedia atau dibuka dalam pratonton, paparkan modal pemasangan
+    setInstallModalPlatform('ANDROID');
+    setShowInstallModal(true);
   };
 
   // React State for Frame-by-Frame Rendering
@@ -555,7 +570,19 @@ export default function App() {
   const currentLevelConfig = LEVEL_CONFIGS[currentLevelIndex];
 
   return (
-    <div className="relative w-screen h-[100dvh] bg-slate-950 text-slate-100 flex flex-col items-center justify-center overflow-hidden font-sans">
+    <div className="relative w-screen h-[100dvh] bg-slate-950 text-slate-100 flex flex-col items-center justify-between overflow-hidden font-sans">
+      {/* Header Navigasi dengan Butang 'Pasang App' (Dipaparkan pada Menu, Pilihan Level & Sifir) */}
+      {gameState !== GameState.PLAYING && (
+        <PwaHeader
+          isInstalled={isInstalled}
+          hasNativePrompt={hasNativePrompt}
+          isMuted={isMuted}
+          onToggleMute={toggleMute}
+          onOpenStats={() => setShowStatsModal(true)}
+          onInstallClick={handlePasangAppClick}
+        />
+      )}
+
       {/* FULLSCREEN MOBILE-OPTIMIZED 3D PLAYING SCREEN */}
       {gameState === GameState.PLAYING && (
         <div className="relative w-full h-full overflow-hidden flex flex-col items-center justify-center">
@@ -573,7 +600,7 @@ export default function App() {
             onToggleMute={toggleMute}
             onPause={() => setGameState(GameState.PAUSED)}
             onActivateJutsu={handleActivateSpecialJutsu}
-            onDirectInstall={handleDirectOneClickInstall}
+            onDirectInstall={handlePasangAppClick}
             feedbackMessage={feedbackMessage}
           />
 
@@ -603,7 +630,7 @@ export default function App() {
 
       {/* Main Menu */}
       {gameState === GameState.MENU && (
-        <div className="w-full h-full overflow-y-auto flex items-center justify-center p-3">
+        <div className="w-full flex-1 overflow-y-auto flex items-center justify-center p-2.5">
           <MainMenu
             stats={stats}
             difficulty={difficulty}
@@ -626,7 +653,7 @@ export default function App() {
 
       {/* Level Select */}
       {gameState === GameState.LEVEL_SELECT && (
-        <div className="w-[94%] max-w-2xl bg-slate-900/95 border border-slate-700 rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col max-h-[90dvh] overflow-y-auto">
+        <div className="w-[94%] max-w-2xl my-auto bg-slate-900/95 border border-slate-700 rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col max-h-[82dvh] overflow-y-auto">
           <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
             <button
               onClick={() => setGameState(GameState.MENU)}
@@ -675,7 +702,7 @@ export default function App() {
 
       {/* Specific Table Select */}
       {gameState === GameState.TABLE_SELECT && (
-        <div className="w-[94%] max-w-lg bg-slate-900 border border-slate-700 rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col text-center max-h-[90dvh] overflow-y-auto">
+        <div className="w-[94%] max-w-lg my-auto bg-slate-900 border border-slate-700 rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col text-center max-h-[82dvh] overflow-y-auto">
           <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
             <button
               onClick={() => setGameState(GameState.MENU)}
@@ -816,7 +843,7 @@ export default function App() {
       {/* Stats Modal */}
       {showStatsModal && <StatsModal stats={stats} onClose={() => setShowStatsModal(false)} />}
 
-      {/* Home Screen Icon Installer Modal */}
+      {/* Home Screen Icon Installer Modal (iOS Safari Guide & Android Prompt) */}
       {showInstallModal && (
         <PwaGuideModal
           initialPlatform={installModalPlatform}
