@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Download, Copy, Check, CheckCircle2, Smartphone, ExternalLink, AlertCircle, Share, PlusSquare, Compass } from 'lucide-react';
+import { X, Download, Copy, Check, CheckCircle2, Smartphone, ExternalLink, AlertCircle, Share, PlusSquare, Compass, ShieldCheck } from 'lucide-react';
 import { installerService } from '../services/installerService';
 import { AppIcon } from './AppIcon';
 
@@ -66,7 +66,7 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
           <div className="flex items-center gap-2">
             <Smartphone className="text-emerald-400" size={20} />
             <h2 className="text-sm sm:text-base font-black text-white uppercase">
-              PASANG APP KE SKRIN UTAMA
+              PASANG APP TULEN (TANPA LOGO CHROME)
             </h2>
           </div>
           <button
@@ -86,16 +86,29 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
           </div>
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[9px] font-black uppercase">
-              <CheckCircle2 size={11} /> Aplikasi Web Progresif (PWA)
+              <ShieldCheck size={11} /> Ikon WebAPK Tulen (100% Bersih)
             </div>
             <p className="text-xs text-slate-200 font-bold leading-snug">
-              Pasang ikon Ninja Sifir 3D pada skrin utama peranti anda untuk bermain skrin penuh & 100% luar talian!
+              Ikon dipasang sebagai Aplikasi Penuh (WebAPK) tanpa lencana kecil Chrome di penjuru ikon!
             </p>
           </div>
         </div>
 
         {/* Platform Switcher Tabs */}
         <div className="grid grid-cols-2 gap-2 mb-3">
+          <button
+            type="button"
+            onClick={() => setActiveTab('ANDROID')}
+            className={`py-2 px-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 border transition ${
+              activeTab === 'ANDROID'
+                ? 'bg-emerald-600 border-emerald-300 text-white shadow-lg'
+                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+            }`}
+          >
+            <AndroidLogo className="w-4 h-4" />
+            <span>Android (WebAPK)</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setActiveTab('IOS')}
@@ -108,22 +121,9 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
             <AppleLogo className="w-4 h-4" />
             <span>iPhone / iPad (iOS)</span>
           </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('ANDROID')}
-            className={`py-2 px-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 border transition ${
-              activeTab === 'ANDROID'
-                ? 'bg-emerald-600 border-emerald-300 text-white shadow-lg'
-                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
-            }`}
-          >
-            <AndroidLogo className="w-4 h-4" />
-            <span>Android / Chrome</span>
-          </button>
         </div>
 
-        {/* PANDUAN PEMASANGAN iOS SAFARI (Share -> Add to Home Screen) */}
+        {/* PANDUAN PEMASANGAN iOS SAFARI */}
         {activeTab === 'IOS' ? (
           <div className="p-3.5 bg-slate-800/80 border border-slate-600 rounded-2xl space-y-3 mb-3">
             <div className="flex items-center gap-2 text-xs font-black text-sky-300 uppercase">
@@ -132,7 +132,6 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
             </div>
 
             <div className="space-y-2 text-xs text-slate-200">
-              {/* Langkah 1: Tekan Share */}
               <div className="flex items-center gap-3 bg-slate-950/90 p-2.5 rounded-xl border border-slate-700/80">
                 <div className="w-8 h-8 rounded-xl bg-sky-500/20 border border-sky-400/50 text-sky-300 flex items-center justify-center shrink-0 font-black">
                   1
@@ -145,7 +144,6 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
                 </div>
               </div>
 
-              {/* Langkah 2: Add to Home Screen */}
               <div className="flex items-center gap-3 bg-slate-950/90 p-2.5 rounded-xl border border-slate-700/80">
                 <div className="w-8 h-8 rounded-xl bg-sky-500/20 border border-sky-400/50 text-sky-300 flex items-center justify-center shrink-0 font-black">
                   2
@@ -158,13 +156,12 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
                 </div>
               </div>
 
-              {/* Langkah 3: Tekan Add */}
               <div className="flex items-center gap-3 bg-slate-950/90 p-2.5 rounded-xl border border-slate-700/80">
                 <div className="w-8 h-8 rounded-xl bg-sky-500/20 border border-sky-400/50 text-sky-300 flex items-center justify-center shrink-0 font-black">
                   3
                 </div>
                 <div className="flex-1 text-[11px] leading-snug">
-                  Tekan butang <strong>&quot;Add&quot; (Tambah)</strong> di penjuru atas kanan. Ikon <strong>Ninja Sifir 3D</strong> kini sedia di skrin utama anda!
+                  Tekan butang <strong>&quot;Add&quot; (Tambah)</strong> di penjuru atas kanan. Ikon <strong>Ninja Sifir 3D</strong> akan muncul tanpa sebarang logo pelayar!
                 </div>
                 <span className="px-2 py-1 rounded bg-sky-600 text-white font-black text-[10px] shrink-0">
                   Add
@@ -172,7 +169,6 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
               </div>
             </div>
 
-            {/* Pilihan Tambahan: Profil WebClip Automatik */}
             <div className="pt-1 border-t border-slate-700/80">
               <button
                 type="button"
@@ -185,13 +181,13 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
             </div>
           </div>
         ) : (
-          /* PANDUAN & PEMASANGAN ANDROID */
+          /* PANDUAN & PEMASANGAN ANDROID TANPA LOGO CHROME */
           <div className="p-3.5 bg-emerald-950/40 border border-emerald-500/40 rounded-2xl space-y-2.5 mb-3">
             {(isIframe || isInApp) && !hasPrompt && (
               <div className="p-2.5 rounded-xl bg-amber-950/80 border border-amber-500/60 flex items-start gap-2 text-[11px] text-amber-200">
                 <AlertCircle size={16} className="text-amber-400 shrink-0 mt-0.5" />
                 <div>
-                  <strong>Mod Pratonton Dikesan:</strong> Sila buka di dalam <strong>Google Chrome</strong> penuh supaya dialog pemasangan aplikasi dapat dipaparkan secara automatik.
+                  <strong>Mod Pratonton Dikesan:</strong> Sila buka di dalam <strong>Google Chrome</strong> penuh supaya Android dapat membina pakej <strong>WebAPK (Tanpa Logo Chrome)</strong>.
                 </div>
               </div>
             )}
@@ -204,19 +200,30 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
               {hasPrompt ? (
                 <>
                   <Smartphone size={18} />
-                  <span>PASANG APP SEKARANG (1-KLIK)</span>
+                  <span>INSTALL APP PENUH SEKARANG (TIADA LOGO CHROME)</span>
                 </>
               ) : (
                 <>
                   <ExternalLink size={18} />
-                  <span>BUKA DI CHROME & PASANG APP</span>
+                  <span>BUKA DI CHROME & INSTALL WEBAPK</span>
                 </>
               )}
             </button>
 
-            <p className="text-[11px] text-slate-300 leading-relaxed">
-              Pada Android Chrome, menekan butang di atas akan memaparkan tetingkap pengesahan <strong>&quot;Install App / Pasang Aplikasi&quot;</strong> untuk meletakkan ikon terus di skrin utama telefon.
-            </p>
+            <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 text-[11px] text-slate-300 space-y-1 leading-relaxed">
+              <div className="font-black text-amber-300">
+                💡 Cara Pastikan Tiada Logo Kecil Chrome Pada Ikon:
+              </div>
+              <p>
+                1. <strong>Buang (Remove)</strong> dahulu ikon lama yang ada logo Chrome dari skrin telefon anda.
+              </p>
+              <p>
+                2. Tekan butang hijau di atas atau pilih <strong>&quot;Install app / Pasang aplikasi&quot;</strong> pada menu Chrome (bukan sekadar pintasan biasa).
+              </p>
+              <p>
+                3. Tunggu mesej <em>&quot;Installing Ninja Sifir 3D...&quot;</em> siap — ikon yang terhasil adalah <strong>100% ikon game tulen tanpa logo Chrome</strong>!
+              </p>
+            </div>
           </div>
         )}
 
