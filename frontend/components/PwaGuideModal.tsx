@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Download, Copy, Check, CheckCircle2, Smartphone, ExternalLink, AlertCircle, Share, PlusSquare, Compass } from 'lucide-react';
 import { installerService } from '../services/installerService';
+import { AppIcon } from './AppIcon';
 
 interface PwaGuideModalProps {
   initialPlatform?: 'ANDROID' | 'IOS';
@@ -77,12 +78,10 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
           </button>
         </div>
 
-        {/* Visual Phone Home Screen Mockup */}
+        {/* Visual Phone Home Screen Mockup with Inline AppIcon */}
         <div className="my-3 p-3 rounded-2xl bg-gradient-to-b from-indigo-950 to-slate-950 border border-indigo-500/40 flex items-center gap-3.5">
           <div className="flex flex-col items-center shrink-0">
-            <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-amber-300 shadow-xl bg-indigo-950">
-              <img src="public/icon.svg" alt="Ninja Sifir 3D Icon" className="w-full h-full object-cover" />
-            </div>
+            <AppIcon className="w-14 h-14 rounded-2xl ring-2 ring-amber-300 shadow-xl" />
             <span className="text-[10px] font-bold text-white mt-1">Ninja Sifir 3D</span>
           </div>
           <div className="space-y-1">
