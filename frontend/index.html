@@ -8,13 +8,14 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Ninja Sifir 3D" />
+  <!-- PENTING: Gunakan URL fizikal sebenar (bukan blob:) supaya Android WebAPK Minter dapat membina aplikasi tulen TANPA logo Chrome -->
   <link id="pwa-manifest-link" rel="manifest" href="public/manifest.webmanifest" />
-  <link id="favicon-link" rel="icon" type="image/png" href="" />
-  <link id="apple-touch-icon-link" rel="apple-touch-icon" href="" />
+  <link id="favicon-link" rel="icon" type="image/svg+xml" href="public/icon.svg" />
+  <link id="apple-touch-icon-link" rel="apple-touch-icon" href="public/icon.svg" />
   <meta name="description" content="Permainan aksi 3D ninja pembelajaran sifir matematik 2 hingga 12. Boleh dimainkan secara luar talian!" />
   <title>NINJA SIFIR: RAGEBOUND 3D — Math Ninja</title>
 
-  <!-- Capture beforeinstallprompt immediately & generate 3D Pixar PNG 192/512 Icons for Android/iOS Home Screen -->
+  <!-- Capture beforeinstallprompt immediately & prepare Apple Touch Icon PNG -->
   <script>
     window.__deferredPwaPrompt = null;
     window.addEventListener('beforeinstallprompt', function(e) {
@@ -23,7 +24,7 @@
       window.dispatchEvent(new CustomEvent('pwa-prompt-ready'));
     });
 
-    (function setupAndroidWebApkManifest() {
+    (function setupAppleTouchIconPng() {
       try {
         function createPixarPngIcon(size) {
           var c = document.createElement('canvas');
@@ -33,20 +34,18 @@
           if (!ctx) return '';
           var s = size / 512;
 
-          // 1. 3D Squircle Background
+          // 1. Full-bleed Background (No transparent corners)
           var bg = ctx.createRadialGradient(256 * s, 160 * s, 30 * s, 256 * s, 256 * s, 360 * s);
           bg.addColorStop(0, '#312e81');
           bg.addColorStop(0.55, '#1e1b4b');
           bg.addColorStop(1, '#090d16');
           ctx.fillStyle = bg;
-          ctx.beginPath();
-          ctx.roundRect(8 * s, 8 * s, 496 * s, 496 * s, 112 * s);
-          ctx.fill();
+          ctx.fillRect(0, 0, size, size);
 
           // Gold Outer Rim
           ctx.strokeStyle = '#fbbf24';
-          ctx.lineWidth = 12 * s;
-          ctx.stroke();
+          ctx.lineWidth = 14 * s;
+          ctx.strokeRect(16 * s, 16 * s, 480 * s, 480 * s);
 
           // 2. Moon Halo
           ctx.fillStyle = 'rgba(254, 249, 195, 0.16)';
@@ -103,7 +102,6 @@
             ctx.arc(cx * s, 226 * s, 11 * s, 0, Math.PI * 2);
             ctx.fill();
 
-            // Specular Glints
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
             ctx.arc((cx - 7) * s, 216 * s, 6.5 * s, 0, Math.PI * 2);
@@ -143,46 +141,11 @@
         var icon512 = createPixarPngIcon(512);
         window.__ninjaIcon512Png = icon512;
 
-        var favLink = document.getElementById('favicon-link');
-        if (favLink && icon192) favLink.href = icon192;
-
+        // Only update apple-touch-icon for iOS Safari; keep <link rel="manifest"> pointing to the real URL for Android WebAPK!
         var appleLink = document.getElementById('apple-touch-icon-link');
         if (appleLink && icon192) appleLink.href = icon192;
-
-        var baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
-        var dynamicManifest = {
-          id: baseUrl,
-          name: 'Ninja Sifir: Ragebound 3D — Math Ninja',
-          short_name: 'Ninja Sifir 3D',
-          description: 'Permainan aksi 3D gaya Disney Pixar untuk latihan sifir matematik 2 hingga 12 secara luar talian (Offline PWA).',
-          start_url: window.location.origin + window.location.pathname,
-          scope: baseUrl,
-          display: 'standalone',
-          orientation: 'any',
-          background_color: '#090d16',
-          theme_color: '#1e1b4b',
-          icons: [
-            {
-              src: icon192,
-              sizes: '192x192',
-              type: 'image/png',
-              purpose: 'any'
-            },
-            {
-              src: icon512,
-              sizes: '512x512',
-              type: 'image/png',
-              purpose: 'any maskable'
-            }
-          ]
-        };
-
-        var blob = new Blob([JSON.stringify(dynamicManifest)], { type: 'application/manifest+json' });
-        var manifestUrl = URL.createObjectURL(blob);
-        var manifestLink = document.getElementById('pwa-manifest-link');
-        if (manifestLink) manifestLink.href = manifestUrl;
       } catch (err) {
-        console.warn('Manifest setup fallback:', err);
+        console.warn('Apple touch icon setup fallback:', err);
       }
     })();
   </script>
