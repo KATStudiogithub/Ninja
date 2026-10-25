@@ -1,5 +1,6 @@
 import React from 'react';
 import { Smartphone, CheckCircle2, Volume2, VolumeX, BarChart3, Shield } from 'lucide-react';
+import { AppIcon } from './AppIcon';
 
 interface PwaHeaderProps {
   isInstalled: boolean;
@@ -22,9 +23,7 @@ export const PwaHeader: React.FC<PwaHeaderProps> = ({
     <header className="w-full bg-slate-900/90 backdrop-blur-md border-b border-slate-800/90 px-3 sm:px-6 py-2 flex items-center justify-between z-30 shrink-0 shadow-lg">
       {/* Brand Logo & Title */}
       <div className="flex items-center gap-2.5 min-w-0">
-        <div className="w-9 h-9 rounded-xl overflow-hidden border-2 border-amber-400 shadow-md shrink-0 bg-indigo-950">
-          <img src="public/icon.svg" alt="Ninja Sifir 3D" className="w-full h-full object-cover" />
-        </div>
+        <AppIcon className="w-10 h-10 rounded-xl ring-2 ring-amber-400/80 shadow-md" />
         <div className="flex flex-col text-left leading-tight truncate">
           <div className="flex items-center gap-1.5">
             <span className="font-black text-xs sm:text-sm text-white tracking-wide truncate">
