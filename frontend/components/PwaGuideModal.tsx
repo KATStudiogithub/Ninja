@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Download, Copy, Check, CheckCircle2, Smartphone, ExternalLink, AlertCircle } from 'lucide-react';
+import { X, Download, Copy, Check, CheckCircle2, Smartphone, ExternalLink, AlertCircle, Share, PlusSquare, Compass } from 'lucide-react';
 import { installerService } from '../services/installerService';
 
 interface PwaGuideModalProps {
@@ -21,7 +21,7 @@ const AppleLogo: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) 
 );
 
 export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
-  initialPlatform = 'ANDROID',
+  initialPlatform = 'IOS',
   onClose,
   onInstallSuccess,
 }) => {
@@ -50,28 +50,28 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
       }
       return;
     }
-    // Launch directly in Native Android Chrome via Intent URI
     installerService.openInNativeAndroidChrome();
   };
 
-  const handleIOSInstallAction = () => {
+  const handleIOSWebClipAction = () => {
     installerService.installToIOSHomeScreen();
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fade-in">
       <div className="w-full max-w-md bg-slate-900 border-2 border-emerald-500/60 rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col max-h-[92dvh] overflow-y-auto text-left">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
           <div className="flex items-center gap-2">
             <Smartphone className="text-emerald-400" size={20} />
             <h2 className="text-sm sm:text-base font-black text-white uppercase">
-              PASANG IKON KE SKRIN FON
+              PASANG APP KE SKRIN UTAMA
             </h2>
           </div>
           <button
             onClick={onClose}
             className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
+            aria-label="Tutup"
           >
             <X size={18} />
           </button>
@@ -80,17 +80,17 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
         {/* Visual Phone Home Screen Mockup */}
         <div className="my-3 p-3 rounded-2xl bg-gradient-to-b from-indigo-950 to-slate-950 border border-indigo-500/40 flex items-center gap-3.5">
           <div className="flex flex-col items-center shrink-0">
-            <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-amber-300 shadow-xl bg-indigo-950">
+            <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-amber-300 shadow-xl bg-indigo-950">
               <img src="public/icon.svg" alt="Ninja Sifir 3D Icon" className="w-full h-full object-cover" />
             </div>
             <span className="text-[10px] font-bold text-white mt-1">Ninja Sifir 3D</span>
           </div>
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[9px] font-black uppercase">
-              <CheckCircle2 size={11} /> Ikon Skrin Utama Rasmi
+              <CheckCircle2 size={11} /> Aplikasi Web Progresif (PWA)
             </div>
             <p className="text-xs text-slate-200 font-bold leading-snug">
-              Meletakkan ikon Ninja Sifir 3D terus di skrin utama telefon anda supaya boleh diklik & terus main!
+              Pasang ikon Ninja Sifir 3D pada skrin utama peranti anda untuk bermain skrin penuh & 100% luar talian!
             </p>
           </div>
         </div>
@@ -98,84 +98,133 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
         {/* Platform Switcher Tabs */}
         <div className="grid grid-cols-2 gap-2 mb-3">
           <button
-            onClick={() => setActiveTab('ANDROID')}
-            className={`py-2 px-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 border transition ${
-              activeTab === 'ANDROID'
-                ? 'bg-emerald-600 border-emerald-300 text-white shadow-lg'
-                : 'bg-slate-800 border-slate-700 text-slate-400'
-            }`}
-          >
-            <AndroidLogo className="w-4 h-4" />
-            <span>ANDROID</span>
-          </button>
-
-          <button
+            type="button"
             onClick={() => setActiveTab('IOS')}
             className={`py-2 px-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 border transition ${
               activeTab === 'IOS'
                 ? 'bg-white border-white text-slate-950 shadow-lg'
-                : 'bg-slate-800 border-slate-700 text-slate-400'
+                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
             }`}
           >
             <AppleLogo className="w-4 h-4" />
-            <span>iPhone / iOS</span>
+            <span>iPhone / iPad (iOS)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('ANDROID')}
+            className={`py-2 px-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 border transition ${
+              activeTab === 'ANDROID'
+                ? 'bg-emerald-600 border-emerald-300 text-white shadow-lg'
+                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+            }`}
+          >
+            <AndroidLogo className="w-4 h-4" />
+            <span>Android / Chrome</span>
           </button>
         </div>
 
-        {activeTab === 'ANDROID' ? (
+        {/* PANDUAN PEMASANGAN iOS SAFARI (Share -> Add to Home Screen) */}
+        {activeTab === 'IOS' ? (
+          <div className="p-3.5 bg-slate-800/80 border border-slate-600 rounded-2xl space-y-3 mb-3">
+            <div className="flex items-center gap-2 text-xs font-black text-sky-300 uppercase">
+              <Compass size={16} className="text-sky-400 shrink-0" />
+              <span>Panduan Pemasangan iOS (Safari)</span>
+            </div>
+
+            <div className="space-y-2 text-xs text-slate-200">
+              {/* Langkah 1: Tekan Share */}
+              <div className="flex items-center gap-3 bg-slate-950/90 p-2.5 rounded-xl border border-slate-700/80">
+                <div className="w-8 h-8 rounded-xl bg-sky-500/20 border border-sky-400/50 text-sky-300 flex items-center justify-center shrink-0 font-black">
+                  1
+                </div>
+                <div className="flex-1 text-[11px] leading-snug">
+                  Buka halaman ini di pelayar <strong>Safari</strong>, kemudian tekan ikon <strong>&quot;Share&quot; (Kongsi)</strong> di bahagian bawah skrin.
+                </div>
+                <div className="p-2 rounded-lg bg-slate-800 border border-slate-600 text-sky-400 shrink-0">
+                  <Share size={18} />
+                </div>
+              </div>
+
+              {/* Langkah 2: Add to Home Screen */}
+              <div className="flex items-center gap-3 bg-slate-950/90 p-2.5 rounded-xl border border-slate-700/80">
+                <div className="w-8 h-8 rounded-xl bg-sky-500/20 border border-sky-400/50 text-sky-300 flex items-center justify-center shrink-0 font-black">
+                  2
+                </div>
+                <div className="flex-1 text-[11px] leading-snug">
+                  Tatal menu ke bawah dan pilih <strong>&quot;Add to Home Screen&quot; (Tambah ke Skrin Utama)</strong>.
+                </div>
+                <div className="p-2 rounded-lg bg-slate-800 border border-slate-600 text-emerald-400 shrink-0">
+                  <PlusSquare size={18} />
+                </div>
+              </div>
+
+              {/* Langkah 3: Tekan Add */}
+              <div className="flex items-center gap-3 bg-slate-950/90 p-2.5 rounded-xl border border-slate-700/80">
+                <div className="w-8 h-8 rounded-xl bg-sky-500/20 border border-sky-400/50 text-sky-300 flex items-center justify-center shrink-0 font-black">
+                  3
+                </div>
+                <div className="flex-1 text-[11px] leading-snug">
+                  Tekan butang <strong>&quot;Add&quot; (Tambah)</strong> di penjuru atas kanan. Ikon <strong>Ninja Sifir 3D</strong> kini sedia di skrin utama anda!
+                </div>
+                <span className="px-2 py-1 rounded bg-sky-600 text-white font-black text-[10px] shrink-0">
+                  Add
+                </span>
+              </div>
+            </div>
+
+            {/* Pilihan Tambahan: Profil WebClip Automatik */}
+            <div className="pt-1 border-t border-slate-700/80">
+              <button
+                type="button"
+                onClick={handleIOSWebClipAction}
+                className="w-full py-2.5 px-3 rounded-xl bg-slate-700/80 hover:bg-slate-600 active:scale-95 text-slate-100 font-bold text-[11px] flex items-center justify-center gap-1.5 transition"
+              >
+                <Download size={14} />
+                <span>Atau Muat Turun Profil Ikon WebClip (.mobileconfig)</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* PANDUAN & PEMASANGAN ANDROID */
           <div className="p-3.5 bg-emerald-950/40 border border-emerald-500/40 rounded-2xl space-y-2.5 mb-3">
-            {/* Diagnostic Alert explaining why it didn't install if inside Iframe / WebView */}
             {(isIframe || isInApp) && !hasPrompt && (
               <div className="p-2.5 rounded-xl bg-amber-950/80 border border-amber-500/60 flex items-start gap-2 text-[11px] text-amber-200">
                 <AlertCircle size={16} className="text-amber-400 shrink-0 mt-0.5" />
                 <div>
-                  <strong>Kenapa belum masuk ke skrin utama?</strong> Anda sedang membuka game ini di dalam tetingkap pratonton (Iframe / WebView). Sistem keselamatan Android hanya membenarkan pemasangan ikon apabila dibuka terus di dalam <strong>Google Chrome</strong>.
+                  <strong>Mod Pratonton Dikesan:</strong> Sila buka di dalam <strong>Google Chrome</strong> penuh supaya dialog pemasangan aplikasi dapat dipaparkan secara automatik.
                 </div>
               </div>
             )}
 
             <button
+              type="button"
               onClick={handleAndroidInstallAction}
               className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 active:scale-95 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl transition"
             >
               {hasPrompt ? (
                 <>
-                  <Download size={18} />
-                  <span>PASANG IKON KE SKRIN ANDROID SEKARANG</span>
+                  <Smartphone size={18} />
+                  <span>PASANG APP SEKARANG (1-KLIK)</span>
                 </>
               ) : (
                 <>
                   <ExternalLink size={18} />
-                  <span>1-KLIK BUKA TERUS DI CHROME & INSTALL</span>
+                  <span>BUKA DI CHROME & PASANG APP</span>
                 </>
               )}
             </button>
 
             <p className="text-[11px] text-slate-300 leading-relaxed">
-              Apabila dibuka di dalam <strong>Google Chrome Android</strong>, pop-up rasmi <strong>"Tambahkan Ninja Sifir 3D ke Skrin Utama"</strong> akan muncul untuk meletakkan ikon game di skrin telefon anda.
+              Pada Android Chrome, menekan butang di atas akan memaparkan tetingkap pengesahan <strong>&quot;Install App / Pasang Aplikasi&quot;</strong> untuk meletakkan ikon terus di skrin utama telefon.
             </p>
-          </div>
-        ) : (
-          <div className="p-3.5 bg-slate-800/80 border border-slate-600 rounded-2xl space-y-2.5 mb-3">
-            <button
-              onClick={handleIOSInstallAction}
-              className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-100 active:scale-95 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xl transition"
-            >
-              <Download size={17} />
-              <span>PASANG PROFIL IKON iPhone (WEBCLIP)</span>
-            </button>
-            <div className="text-[11px] text-slate-300 space-y-1 leading-relaxed">
-              <p>Selepas menekan butang putih di atas pada Safari iPhone:</p>
-              <p>1. Tekan <strong>"Allow / Benarkan"</strong> pada pop-up profil ikon.</p>
-              <p>2. Buka <strong>Settings → Profile Downloaded → Install</strong>, dan ikon <strong>Ninja Sifir 3D</strong> akan terus muncul di skrin utama iPhone anda!</p>
-            </div>
           </div>
         )}
 
         {/* Copy Link Box */}
         <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-1.5 mb-3">
           <div className="text-[10px] font-bold text-slate-400 uppercase">
-            Salin Link (Untuk Tampal Terus di Google Chrome Android / Safari):
+            Salin Pautan Aplikasi (Untuk Dibuka di Safari / Chrome):
           </div>
           <div className="flex items-center gap-1.5">
             <input
@@ -185,6 +234,7 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
               className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-300 font-mono select-all"
             />
             <button
+              type="button"
               onClick={handleCopyLink}
               className="shrink-0 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1"
             >
@@ -195,6 +245,7 @@ export const PwaGuideModal: React.FC<PwaGuideModalProps> = ({
         </div>
 
         <button
+          type="button"
           onClick={onClose}
           className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-xs sm:text-sm tracking-wide transition"
         >
